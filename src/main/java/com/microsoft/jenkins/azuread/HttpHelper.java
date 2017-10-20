@@ -71,7 +71,7 @@ public class HttpHelper {
     private static Map<String, String> generateHeaders(HttpRequestBase request, String accessToken, ContentType contentType) {
         Map<String, String> headers = new HashMap<String, String>();
         if (request instanceof HttpGet) {
-//            headers.put("api-version", "v1.0");
+//            headers.put("client-version", "v1.0");
             if (accessToken != null) headers.put("Authorization", "Bearer " + accessToken);
             headers.put("Accept", "application/json");
         } else if (request instanceof HttpPost) {
@@ -86,11 +86,11 @@ public class HttpHelper {
             }
             if (accessToken != null) {
                 headers.put("Authorization", "Bearer " + accessToken);
-//                headers.put("api-version", "v1.0");
+//                headers.put("client-version", "v1.0");
                 headers.put("Accept", "application/json, text/plain, */*");
                 headers.put("Content-Type", contentTypeStr + ";" + charSetStr);
             } else {
-//                headers.put("api-version", "v1.0");
+//                headers.put("client-version", "v1.0");
                 headers.put("Accept", "application/json, text/plain, */*");
                 headers.put("Content-Type", contentTypeStr + ";" + charSetStr);
             }
@@ -105,7 +105,7 @@ public class HttpHelper {
                 charSetStr = "charset=" + ContentType.APPLICATION_JSON.getCharset().toString();
             }
             headers.put("Authorization", "Bearer " + accessToken);
-//            headers.put("api-version", "v1.0");
+//            headers.put("client-version", "v1.0");
             headers.put("Accept", "application/json, text/plain, */*");
             headers.put("Content-Type", contentTypeStr + ";" + charSetStr);
         }

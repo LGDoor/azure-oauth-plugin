@@ -1,4 +1,4 @@
-package com.microsoft.jenkins.azuread;
+package com.microsoft.jenkins.azuread.client;
 
 import com.google.gson.annotations.SerializedName;
 

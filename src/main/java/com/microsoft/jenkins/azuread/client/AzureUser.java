@@ -1,6 +1,7 @@
-package com.microsoft.jenkins.azuread;
+package com.microsoft.jenkins.azuread.client;
 
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.jenkins.azuread.client.AzureObject;
 
 public class AzureUser extends AzureObject {
 

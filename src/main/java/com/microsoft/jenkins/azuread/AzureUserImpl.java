@@ -5,11 +5,7 @@ import hudson.security.SecurityRealm;
 import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.userdetails.UserDetails;
 
-public class AzureIdTokenUser implements UserDetails {
-
-    public class AzureUserResponce {
-        public AzureIdTokenUser user;
-    }
+public class AzureUserImpl implements UserDetails {
 
     @SerializedName("name")
     public String userName;
@@ -26,7 +22,7 @@ public class AzureIdTokenUser implements UserDetails {
     @SerializedName("upn")
     public String UderPrincipleName;
 
-    public AzureIdTokenUser() {
+    public AzureUserImpl() {
         super();
     }
 

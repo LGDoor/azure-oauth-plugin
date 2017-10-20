@@ -26,6 +26,10 @@
 package com.michelin.cio.hudson.plugins.rolestrategy;
 
 import com.microsoft.jenkins.azuread.*;
+import com.microsoft.jenkins.azuread.client.AzureCachePool;
+import com.microsoft.jenkins.azuread.client.AzureObject;
+import com.microsoft.jenkins.azuread.client.AzureObjectType;
+import com.microsoft.jenkins.azuread.oauth.AzureToken;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleMacroExtension;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.UserMacroExtension;
@@ -231,7 +235,7 @@ public class RoleStrategyConfig extends ManagementLink implements ExtensionPoint
 
       SecurityRealm realm = Utils.JenkinsUtil.getSecurityRealm();
       if (!(realm instanceof AzureSecurityRealm)) return null;
-      AzureApiToken appOnlyToken = AzureAuthenticationToken.getAppOnlyToken();
+      AzureToken appOnlyToken = AzureAuthenticationToken.getAppOnlyToken();
       Set<AzureObject> candidates = new HashSet<>();
       System.out.println("get all users");
       Set<AzureObject> users = AzureCachePool.getAllAzureObjects(AzureObjectType.User);

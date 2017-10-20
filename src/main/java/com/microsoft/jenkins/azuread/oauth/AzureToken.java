@@ -1,4 +1,4 @@
-package com.microsoft.jenkins.azuread;
+package com.microsoft.jenkins.azuread.oauth;
 
 import org.apache.commons.codec.binary.Base64;
 import com.google.gson.Gson;
@@ -15,12 +15,12 @@ import java.util.regex.Pattern;
 /**
  * @author <a href='mailto:donbeave@gmail.com'>Alexey Zhokhov</a>
  */
-public class AzureApiToken extends Token {
+public class AzureToken extends Token {
 
     private Date expiry;
     private String userInfo;
 
-    public AzureApiToken(java.lang.String token, java.lang.String secret, Date expiry, java.lang.String rawResponse) throws JSONException {
+    public AzureToken(java.lang.String token, java.lang.String secret, Date expiry, java.lang.String rawResponse) throws JSONException {
         super(token, secret, rawResponse);
         this.expiry = expiry;
         setUserInfo(rawResponse);
@@ -30,7 +30,7 @@ public class AzureApiToken extends Token {
     private void setUserInfoByIdToken(String idToken) throws JSONException {
             String parts[] = idToken.split("\\.");
             userInfo = base64UrlDecode(parts[1]);
-//            AzureIdTokenUser userResponse = GSON.fromJson(base64UrlDecode(parts[1]), AzureIdTokenUser.class);
+//            AzureUserImpl userResponse = GSON.fromJson(base64UrlDecode(parts[1]), AzureUserImpl.class);
 //            return userResponse;
     }
 

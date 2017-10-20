@@ -1,4 +1,4 @@
-package com.microsoft.jenkins.azuread;
+package com.microsoft.jenkins.azuread.client;
 
 /**
  * Created by albertxavier on 2017/9/9.

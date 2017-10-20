@@ -1,5 +1,6 @@
-package com.microsoft.jenkins.azuread;
+package com.microsoft.jenkins.azuread.client;
 
+import com.microsoft.jenkins.azuread.HttpHelper;
 import org.apache.http.HttpResponse;
 import org.json.JSONException;
 

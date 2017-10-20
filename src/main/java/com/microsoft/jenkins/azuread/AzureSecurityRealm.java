@@ -1,9 +1,13 @@
 package com.microsoft.jenkins.azuread;
 
 //
-//import com.microsoft.azure.oauth.api.AzureActiveDirectoryApiService;
-//import com.microsoft.azure.oauth.api.AzureActiveDirectoryConfig;
+//import com.microsoft.azure.oauth.client.AzureActiveDirectoryApiService;
+//import com.microsoft.azure.oauth.client.AzureActiveDirectoryConfig;
 
+import com.microsoft.jenkins.azuread.client.AzureAdApiClient;
+import com.microsoft.jenkins.azuread.client.AzureCachePool;
+import com.microsoft.jenkins.azuread.oauth.AzureApi;
+import com.microsoft.jenkins.azuread.oauth.AzureToken;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.converters.MarshallingContext;
@@ -155,8 +159,8 @@ public class AzureSecurityRealm extends SecurityRealm {
 
 //        // todo: debug
 //        try {
-//            AzureApiToken tmpToken = AzureAuthenticationToken.getAppOnlyToken(clientid, clientsecret, tenant);
-//            AzureResponse res = AzureAdApi.getAllGroupsDisplayNameUpnMapInTenant(tmpToken.getToken());
+//            AzureToken tmpToken = AzureAuthenticationToken.getAppOnlyToken(clientid, clientsecret, tenant);
+//            AzureResponse res = AzureAdApiClient.getAllGroupsDisplayNameUpnMapInTenant(tmpToken.getToken());
 //        } catch (ExecutionException e) {
 //            e.printStackTrace();
 //        } catch (JSONException e) {
@@ -207,9 +211,9 @@ public class AzureSecurityRealm extends SecurityRealm {
 
         if (!accessToken.isEmpty()) {
             AzureAuthenticationToken auth = null;
-            if (accessToken instanceof AzureApiToken) {
-                AzureApiToken azureApiToken = (AzureApiToken)accessToken;
-                auth = new AzureAuthenticationToken(azureApiToken, clientid.getPlainText(), clientsecret.getPlainText(), 0);
+            if (accessToken instanceof AzureToken) {
+                AzureToken azureToken = (AzureToken)accessToken;
+                auth = new AzureAuthenticationToken(azureToken, clientid.getPlainText(), clientsecret.getPlainText(), 0);
 //                if (tokenType == 0) {
 //                    OAuthService service1 = getService(Constants.DEFAULT_GRAPH_ENDPOINT);
 //                    HttpHelper.sendGet(service1.getAuthorizationUrl(EMPTY_TOKEN), null);
@@ -251,7 +255,7 @@ public class AzureSecurityRealm extends SecurityRealm {
         // invalidateBelongingGroupsByOid
         if (auth instanceof AzureAuthenticationToken) {
             AzureAuthenticationToken azureToken = (AzureAuthenticationToken) auth;
-            String oid = azureToken.getAzureIdTokenUser().getObjectID();
+            String oid = azureToken.getAzureUserImpl().getObjectID();
             AzureCachePool.invalidateBelongingGroupsByOid(oid);
             System.out.println("invalidateBelongingGroupsByOid cache entry when sign out");
         }
@@ -267,7 +271,7 @@ public class AzureSecurityRealm extends SecurityRealm {
     public SecurityComponents createSecurityComponents() {
         return new SecurityComponents(new AuthenticationManager() {
             public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-                if (authentication instanceof AzureApiToken) {
+                if (authentication instanceof AzureToken) {
                     return authentication;
                 }
 
@@ -432,7 +436,7 @@ public class AzureSecurityRealm extends SecurityRealm {
                                                     @QueryParameter final String tenant) throws IOException, JSONException, ExecutionException {
 
 
-            org.apache.http.HttpResponse response = AzureAdApi.getAppOnlyAccessTokenResponce(clientid, clientsecret, tenant);
+            org.apache.http.HttpResponse response = AzureAdApiClient.getAppOnlyAccessTokenResponce(clientid, clientsecret, tenant);
             int statusCode = HttpHelper.getStatusCode(response);
             String content = HttpHelper.getContent(response);
             if (statusCode != 200) {
@@ -445,7 +449,7 @@ public class AzureSecurityRealm extends SecurityRealm {
 
     private String generateDescription(Authentication auth) {
         if (auth instanceof AzureAuthenticationToken) {
-            AzureIdTokenUser user = ((AzureAuthenticationToken) auth).getAzureIdTokenUser();
+            AzureUserImpl user = ((AzureAuthenticationToken) auth).getAzureUserImpl();
             StringBuffer description  = new StringBuffer("Azure Active Directory User\n\n");
             description.append("Given Name: " + user.getGivenName() + "\n");
             description.append("Family Name: " + user.getFamilyName() + "\n");

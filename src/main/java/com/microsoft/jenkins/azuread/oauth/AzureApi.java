@@ -1,9 +1,6 @@
-package com.microsoft.jenkins.azuread;
+package com.microsoft.jenkins.azuread.oauth;
 
-//import grails.converters.JSON;
-//import grails.util.Holders;
-//import org.codehaus.groovy.grails.web.json.JSONObject;
-
+import com.microsoft.jenkins.azuread.Constants;
 import org.json.*;
 import org.scribe.builder.api.DefaultApi20;
 import org.scribe.exceptions.OAuthException;
@@ -96,7 +93,7 @@ public class AzureApi extends DefaultApi20 {
                             int lifeTime = Integer.parseInt(OAuthEncoder.decode(tokenResponse.getString("expires_in")));
                             expiry = new Date(System.currentTimeMillis() + lifeTime * 1000);
                         }
-                        return new AzureApiToken(token, refreshToken, expiry, response);
+                        return new AzureToken(token, refreshToken, expiry, response);
                     } else {
                         throw new OAuthException("Response body is incorrect. Can't extract a token from this: '" + response + "'", null);
                     }
@@ -154,7 +151,7 @@ public class AzureApi extends DefaultApi20 {
     }
 
 
-    public AzureApiToken refreshToken(Token accessToken, String clientID, String clientSecret, String resource) {
+    public AzureToken refreshToken(Token accessToken, String clientID, String clientSecret, String resource) {
         OAuthRequest request = new OAuthRequest(Verb.POST,Constants.DEFAULT_AUTHENTICATION_ENDPOINT + tenant +"/oauth2/token");
         request.addBodyParameter("grant_type", "refresh_token");
         request.addBodyParameter("refresh_token", accessToken.getSecret()); // were accessToken is the Token object you want to refresh.
@@ -162,12 +159,12 @@ public class AzureApi extends DefaultApi20 {
         request.addBodyParameter("client_secret", clientSecret);
         request.addBodyParameter("resource", resource);
         Response response = request.send();
-        return (AzureApiToken) getAccessTokenExtractor().extract(response.getBody());
+        return (AzureToken) getAccessTokenExtractor().extract(response.getBody());
 
     }
 
 
-    public AzureApiToken getAccessTokenByRefreshToken(Token token, String clientID, String clientSecret, String resource) {
+    public AzureToken getAccessTokenByRefreshToken(Token token, String clientID, String clientSecret, String resource) {
         return refreshToken(token, clientID, clientSecret, resource);
     }
 

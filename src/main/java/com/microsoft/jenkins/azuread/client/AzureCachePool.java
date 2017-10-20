@@ -1,9 +1,11 @@
-package com.microsoft.jenkins.azuread;
+package com.microsoft.jenkins.azuread.client;
 
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.microsoft.jenkins.azuread.*;
+import com.microsoft.jenkins.azuread.oauth.AzureToken;
 import hudson.security.SecurityRealm;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
@@ -36,8 +38,8 @@ public class AzureCachePool {
 //            Authentication auth = Jenkins.getAuthentication();
 //            if (!(auth instanceof AzureAuthenticationToken)) return new HashSet<String>();
 ////            String aadAccessToken = ((AzureAuthenticationToken) auth).getAzureAdToken().getToken();
-//            AzureApiToken accessToken = AzureAuthenticationToken.getAppOnlyToken();
-//            AzureResponse<Set<String>> res = AzureAdApi.getGroupsByUserId(accessToken.getToken());
+//            AzureToken accessToken = AzureAuthenticationToken.getAppOnlyToken();
+//            AzureResponse<Set<String>> res = AzureAdApiClient.getGroupsByUserId(accessToken.getToken());
 //            if (!res.isSuccess()) {
 //                System.out.println("getBelongingGroupsByOid: set is empty");
 //                System.out.println("error: " + res.getResponseContent());
@@ -60,9 +62,9 @@ public class AzureCachePool {
                     Authentication auth = Jenkins.getAuthentication();
                     if (!(auth instanceof AzureAuthenticationToken)) return new HashSet<String>();
 //            String aadAccessToken = ((AzureAuthenticationToken) auth).getAzureAdToken().getToken();
-                    AzureApiToken accessToken = AzureAuthenticationToken.getAppOnlyToken();
-                    String oid = ((AzureAuthenticationToken) auth).getAzureIdTokenUser().getObjectID();
-                    AzureResponse<Set<String>> res = AzureAdApi.getGroupsByUserId(accessToken.getToken(), oid);
+                    AzureToken accessToken = AzureAuthenticationToken.getAppOnlyToken();
+                    String oid = ((AzureAuthenticationToken) auth).getAzureUserImpl().getObjectID();
+                    AzureResponse<Set<String>> res = AzureAdApiClient.getGroupsByUserId(accessToken.getToken(), oid);
                     if (!res.isSuccess()) {
                         System.out.println("getBelongingGroupsByOid: set is empty");
                         System.out.println("error: " + res.getResponseContent());
@@ -102,9 +104,9 @@ public class AzureCachePool {
 //                    String clientId = azureRealm.getClientid();
 //                    String clientSecret = azureRealm.getClientsecret();
 //                    String tenant = azureRealm.getTenant();
-                    AzureApiToken appOnlyToken = AzureAuthenticationToken.getAppOnlyToken();
+                    AzureToken appOnlyToken = AzureAuthenticationToken.getAppOnlyToken();
                     if (appOnlyToken == null) return null;
-                    AzureResponse<Set<AzureObject>> res = AzureAdApi.getAllAzureObjects(appOnlyToken.getToken(), type);
+                    AzureResponse<Set<AzureObject>> res = AzureAdApiClient.getAllAzureObjects(appOnlyToken.getToken(), type);
                     if (res.isFail()) return null;
                     return res.get();
                 }
