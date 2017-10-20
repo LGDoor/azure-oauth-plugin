@@ -1,12 +1,9 @@
-package com.microsoft.azure.oauth;
+package com.microsoft.jenkins.azuread;
 
 import org.apache.http.HttpResponse;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.*;
 
 /**
  * Created by t-wanl on 9/1/2017.

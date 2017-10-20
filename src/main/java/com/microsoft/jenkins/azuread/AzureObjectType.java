@@ -1,7 +1,4 @@
-package com.microsoft.azure.oauth;
-
-import java.util.HashMap;
-import java.util.Map;
+package com.microsoft.jenkins.azuread;
 
 /**
  * Created by albertxavier on 2017/9/9.

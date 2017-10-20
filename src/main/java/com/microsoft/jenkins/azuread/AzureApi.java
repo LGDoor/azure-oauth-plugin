@@ -1,4 +1,4 @@
-package com.microsoft.azure.oauth;
+package com.microsoft.jenkins.azuread;
 
 //import grails.converters.JSON;
 //import grails.util.Holders;

@@ -1,4 +1,4 @@
-package com.microsoft.azure.oauth;
+package com.microsoft.jenkins.azuread;
 
 import org.apache.commons.codec.binary.Base64;
 import com.google.gson.Gson;

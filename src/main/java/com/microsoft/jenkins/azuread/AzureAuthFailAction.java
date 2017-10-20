@@ -21,9 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.microsoft.azure.oauth;
+package com.microsoft.jenkins.azuread;
 
-import com.microsoft.azure.management.appservice.AzureResourceType;
 import hudson.Extension;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.SecurityRealm;
@@ -36,14 +35,14 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
  * This prevents a logout -- login loop when using this security realm and Anonymous does not have {@code Overall.READ} permission.
  */
 @Extension
-public class AzureLogoutAction implements UnprotectedRootAction {
+public class AzureAuthFailAction implements UnprotectedRootAction {
 
     /** The URL of the action. */
-    static final String POST_LOGOUT_URL = "azureLogout";
+    static final String POST_LOGOUT_URL = "azureAuthFail";
 
     @Override
     public String getDisplayName() {
-        return "Azure Logout";
+        return "Azure Auth Fail";
     }
 
     @Override

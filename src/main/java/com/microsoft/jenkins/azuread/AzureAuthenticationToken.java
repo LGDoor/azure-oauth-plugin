@@ -1,8 +1,7 @@
-package com.microsoft.azure.oauth;
+package com.microsoft.jenkins.azuread;
 
 import com.google.gson.Gson;
 import hudson.security.SecurityRealm;
-import jenkins.model.Jenkins;
 import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.providers.AbstractAuthenticationToken;
 import org.apache.commons.lang.StringUtils;

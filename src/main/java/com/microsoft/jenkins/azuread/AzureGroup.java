@@ -1,9 +1,6 @@
-package com.microsoft.azure.oauth;
+package com.microsoft.jenkins.azuread;
 
 import com.google.gson.annotations.SerializedName;
-import hudson.security.SecurityRealm;
-import org.acegisecurity.GrantedAuthority;
-import org.acegisecurity.userdetails.UserDetails;
 
 public class AzureGroup extends AzureObject {
 

@@ -25,14 +25,13 @@
 
 package com.michelin.cio.hudson.plugins.rolestrategy;
 
-import com.microsoft.azure.oauth.*;
+import com.microsoft.jenkins.azuread.*;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleMacroExtension;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.UserMacroExtension;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.ExtensionPoint;
-import hudson.RelativePath;
 import hudson.model.*;
 import hudson.model.Descriptor.FormException;
 import hudson.security.AuthorizationStrategy;
@@ -49,14 +48,12 @@ import hudson.util.FormApply;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 
-import net.sf.json.JSONObject;
 import org.apache.commons.collections4.ListUtils;
 import org.json.JSONException;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import static hudson.util.FormApply.success;
 import javax.annotation.CheckForNull;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;

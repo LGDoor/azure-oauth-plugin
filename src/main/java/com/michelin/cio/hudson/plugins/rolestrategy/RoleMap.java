@@ -26,8 +26,10 @@ package com.michelin.cio.hudson.plugins.rolestrategy;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-//import com.microsoft.azure.AzureResponseBuilder;
-import com.microsoft.azure.oauth.*;
+import com.microsoft.jenkins.azuread.AzureAuthenticationToken;
+import com.microsoft.jenkins.azuread.AzureCachePool;
+import com.microsoft.jenkins.azuread.AzureSecurityRealm;
+import com.microsoft.jenkins.azuread.Utils;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.Macro;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleMacroExtension;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType;

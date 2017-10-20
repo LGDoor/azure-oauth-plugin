@@ -25,7 +25,6 @@
 
 package com.michelin.cio.hudson.plugins.rolestrategy;
 
-import com.microsoft.azure.oauth.*;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.UserMacroExtension;
 import com.thoughtworks.xstream.converters.Converter;

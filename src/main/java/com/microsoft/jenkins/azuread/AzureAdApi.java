@@ -1,4 +1,4 @@
-package com.microsoft.azure.oauth;
+package com.microsoft.jenkins.azuread;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
