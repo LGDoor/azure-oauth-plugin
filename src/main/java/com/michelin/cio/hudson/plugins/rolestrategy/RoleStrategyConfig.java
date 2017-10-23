@@ -52,7 +52,6 @@ import hudson.util.FormApply;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 
-import org.apache.commons.collections4.ListUtils;
 import org.json.JSONException;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -246,8 +245,8 @@ public class RoleStrategyConfig extends ManagementLink implements ExtensionPoint
 
       for (AzureObject obj : candidates) {
         String candadateText = MessageFormat.format("{0} ({1})",obj.getDisplayName(), obj.getObjectId());
-        if (ListUtils.longestCommonSubsequence(candadateText.toLowerCase(), value.toLowerCase()).equalsIgnoreCase(value))
-          c.add(candadateText);
+//        if (ListUtils.longestCommonSubsequence(candadateText.toLowerCase(), value.toLowerCase()).equalsIgnoreCase(value))
+//          c.add(candadateText);
       }
 
       return c;

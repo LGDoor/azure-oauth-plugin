@@ -36,15 +36,26 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.scm.SCM;
 import hudson.security.*;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import javax.servlet.ServletException;
-
 import hudson.util.VersionNumber;
+import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+import org.acegisecurity.acls.sid.PrincipalSid;
+import org.jenkinsci.plugins.rolestrategy.permissions.DangerousPermissionHandlingMode;
+import org.jenkinsci.plugins.rolestrategy.permissions.DangerousPermissionHelper;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.servlet.ServletException;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.text.MessageFormat;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,27 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
-import org.acegisecurity.acls.sid.PrincipalSid;
-//import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.lang3.text.ExtendedMessageFormat;
-import org.jenkinsci.plugins.rolestrategy.permissions.DangerousPermissionHandlingMode;
-import org.jenkinsci.plugins.rolestrategy.permissions.DangerousPermissionHelper;
-import org.json.JSONException;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
-import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * Role-based authorization strategy.
