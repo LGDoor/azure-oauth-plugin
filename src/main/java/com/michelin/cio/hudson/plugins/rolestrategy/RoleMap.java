@@ -27,7 +27,7 @@ package com.michelin.cio.hudson.plugins.rolestrategy;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.microsoft.jenkins.azuread.AzureAuthenticationToken;
-import com.microsoft.jenkins.azuread.client.AzureCachePool;
+import com.microsoft.jenkins.azuread.api.AzureCachePool;
 import com.microsoft.jenkins.azuread.AzureSecurityRealm;
 import com.microsoft.jenkins.azuread.Utils;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.Macro;
@@ -105,9 +105,8 @@ public class RoleMap {
       Authentication auth = Jenkins.getAuthentication();
 
       if (auth instanceof AzureAuthenticationToken) {
-          System.out.println("current auth is " + ((AzureAuthenticationToken) auth).getAzureUserImpl().getUniqueName());
+          System.out.println("current auth is " + ((AzureAuthenticationToken) auth).getAzureAdUser().getUniqueName());
 //          System.out.println("current aad token is " + ((AzureAuthenticationToken) auth).getAzureAdToken());
-          System.out.println("current  rm token is " + ((AzureAuthenticationToken) auth).getAzureRmToken());
       }
 //      Jenkins jenkins = Jenkins.getInstance();
 //      if (jenkins == null) {
@@ -122,7 +121,7 @@ public class RoleMap {
 //          AzureToken accessToken = AzureAuthenticationToken.getAppOnlyToken();
 //          if (accessToken == null) return false;
 //          AzureResponse response = AzureAdApiClient.getGroupsByUserId(accessToken.getToken());
-          String oid = ((AzureAuthenticationToken) auth).getAzureUserImpl().getObjectID();
+          String oid = ((AzureAuthenticationToken) auth).getAzureAdUser().getObjectID();
           Set<String> set = AzureCachePool.getBelongingGroupsByOid(oid);
 
           // plus user himself/herself

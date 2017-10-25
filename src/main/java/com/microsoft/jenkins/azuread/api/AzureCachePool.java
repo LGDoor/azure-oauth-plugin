@@ -1,11 +1,11 @@
-package com.microsoft.jenkins.azuread.client;
+package com.microsoft.jenkins.azuread.api;
 
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.microsoft.jenkins.azuread.*;
-import com.microsoft.jenkins.azuread.oauth.AzureToken;
+import com.microsoft.jenkins.azuread.scribe.AzureToken;
 import hudson.security.SecurityRealm;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
@@ -62,9 +62,9 @@ public class AzureCachePool {
                     Authentication auth = Jenkins.getAuthentication();
                     if (!(auth instanceof AzureAuthenticationToken)) return new HashSet<String>();
 //            String aadAccessToken = ((AzureAuthenticationToken) auth).getAzureAdToken().getToken();
-                    AzureToken accessToken = AzureAuthenticationToken.getAppOnlyToken();
-                    String oid = ((AzureAuthenticationToken) auth).getAzureUserImpl().getObjectID();
-                    AzureResponse<Set<String>> res = AzureAdApiClient.getGroupsByUserId(accessToken.getToken(), oid);
+                    AzureToken token = AzureAuthenticationToken.getAppOnlyToken();
+                    String oid = ((AzureAuthenticationToken) auth).getAzureAdUser().getObjectID();
+                    AzureResponse<Set<String>> res = AzureAdApiClient.getGroupsByUserId(token.getAccessToken(), oid);
                     if (!res.isSuccess()) {
                         System.out.println("getBelongingGroupsByOid: set is empty");
                         System.out.println("error: " + res.getResponseContent());
@@ -106,7 +106,7 @@ public class AzureCachePool {
 //                    String tenant = azureRealm.getTenant();
                     AzureToken appOnlyToken = AzureAuthenticationToken.getAppOnlyToken();
                     if (appOnlyToken == null) return null;
-                    AzureResponse<Set<AzureObject>> res = AzureAdApiClient.getAllAzureObjects(appOnlyToken.getToken(), type);
+                    AzureResponse<Set<AzureObject>> res = AzureAdApiClient.getAllAzureObjects(appOnlyToken.getAccessToken(), type);
                     if (res.isFail()) return null;
                     return res.get();
                 }

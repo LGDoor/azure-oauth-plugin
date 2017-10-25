@@ -1,9 +1,9 @@
 package com.microsoft.jenkins.azuread;
 
-import com.microsoft.jenkins.azuread.client.AzureCachePool;
-import com.microsoft.jenkins.azuread.client.AzureObject;
-import com.microsoft.jenkins.azuread.client.AzureObjectType;
-import com.microsoft.jenkins.azuread.oauth.AzureToken;
+import com.microsoft.jenkins.azuread.api.AzureCachePool;
+import com.microsoft.jenkins.azuread.api.AzureObject;
+import com.microsoft.jenkins.azuread.api.AzureObjectType;
+import com.microsoft.jenkins.azuread.scribe.AzureToken;
 import hudson.Extension;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Descriptor;
@@ -41,7 +41,7 @@ public class AzureAdMatrixAuthorizationStategy extends GlobalMatrixAuthorization
         }
 
         public AutoCompletionCandidates doAutoCompleteUserOrGroup(@QueryParameter String value)
-                throws JSONException, ExecutionException, IOException {
+                throws ExecutionException, IOException, InterruptedException {
             if (StringUtils.isEmpty(value))
                 return null;
             AutoCompletionCandidates c = new AutoCompletionCandidates();

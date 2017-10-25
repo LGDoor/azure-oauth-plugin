@@ -1,4 +1,4 @@
-package com.microsoft.jenkins.azuread.client;
+package com.microsoft.jenkins.azuread.api;
 
 import com.microsoft.jenkins.azuread.HttpHelper;
 import org.apache.http.HttpResponse;

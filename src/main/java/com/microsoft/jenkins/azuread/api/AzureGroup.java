@@ -1,7 +1,6 @@
-package com.microsoft.jenkins.azuread.client;
+package com.microsoft.jenkins.azuread.api;
 
 import com.google.gson.annotations.SerializedName;
-import com.microsoft.jenkins.azuread.client.AzureObject;
 
 public class AzureGroup extends AzureObject {
 

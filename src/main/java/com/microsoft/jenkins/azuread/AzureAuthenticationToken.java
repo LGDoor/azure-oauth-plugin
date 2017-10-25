@@ -1,16 +1,17 @@
 package com.microsoft.jenkins.azuread;
 
+import com.github.scribejava.core.oauth.OAuth20Service;
 import com.google.gson.Gson;
-import com.microsoft.jenkins.azuread.client.AzureAdApiClient;
-import com.microsoft.jenkins.azuread.oauth.AzureApi;
-import com.microsoft.jenkins.azuread.oauth.AzureToken;
+import com.microsoft.jenkins.azuread.api.AzureAdApiClient;
+import com.microsoft.jenkins.azuread.scribe.AzureApi;
+import com.microsoft.jenkins.azuread.scribe.AzureToken;
 import hudson.security.SecurityRealm;
+import jenkins.model.Jenkins;
 import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.providers.AbstractAuthenticationToken;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.scribe.utils.OAuthEncoder;
 
 import java.io.IOException;
 import java.util.Date;
@@ -31,15 +32,14 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
     private String clientID;
     private String clientSecret;
     private AzureToken azureRmToken;
-//    private AzureToken azureAdToken;
-    private AzureUserImpl azureUserImpl;
+    private AzureAdUser azureAdUser;
     public static final String APP_ONLY_TOKEN_KEY = "APP_ONLY_TOKEN_KEY";
     public static final TimeUnit CACHE_EXPIRY = TimeUnit.HOURS;
     private static final Logger LOGGER = Logger.getLogger(AbstractAuthenticationToken.class.getName());
     private static String servicePrincipal;
 
 
-    private static AzureToken appOnlyToken;
+    private static volatile AzureToken appOnlyToken;
 
 //    private static final Cache<String, AzureToken> userToken =
 //            CacheBuilder.newBuilder().expireAfterAccess(1, CACHE_EXPIRY).build();
@@ -50,9 +50,7 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
         appOnlyToken = null;
 
         // extract user
-        Gson gson = new Gson();
-        String userInfo = token.getUserInfo();
-        this.azureUserImpl = gson.fromJson(userInfo, AzureUserImpl.class);
+        this.azureAdUser = AzureAdUser.createFromJwt(token.getIdToken());
 
         // store token
         System.out.println("set rm token");
@@ -65,7 +63,7 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
 
         boolean authenticated = false;
 
-        if (azureUserImpl != null) {
+        if (azureAdUser != null) {
             authenticated = true;
         }
         setAuthenticated(authenticated);
@@ -73,7 +71,7 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public GrantedAuthority[] getAuthorities() {
-        return this.azureUserImpl != null ? this.azureUserImpl.getAuthorities() : new GrantedAuthority[0];
+        return this.azureAdUser != null ? this.azureAdUser.getAuthorities() : new GrantedAuthority[0];
     }
 
     /**
@@ -90,18 +88,17 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
 //    }
 
 
-    public AzureToken getAzureRmToken() {
-        if (azureRmToken == null) return null;
-        if (azureRmToken.getExpiry().after(new Date()))
-            return azureRmToken;
-        else { // refresh token
-            System.out.println("refresh rm user token");
-            AzureApi api = new AzureApi();
-            AzureToken newToken = api.refreshToken(azureRmToken, clientID, clientSecret, Constants.DEFAULT_RESOURCE);
-            this.azureRmToken = newToken;
-            return newToken;
-        }
-    }
+//    public AzureToken getAzureRmToken() {
+//        if (azureRmToken == null) return null;
+//        if (!azureRmToken.isExpired())
+//            return azureRmToken;
+//        else { // refresh token
+//            System.out.println("refresh rm user token");
+//            AzureToken newToken = api.refreshToken(azureRmToken, clientID, clientSecret, Constants.DEFAULT_RESOURCE);
+//            this.azureRmToken = newToken;
+//            return newToken;
+//        }
+//    }
 
 //    public AzureToken getAccessTokenByRefreshToken() {
 //            System.out.println("get ad user token by refresh_token of rm token");
@@ -136,42 +133,23 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
     }
 
 
-    public static AzureToken refreshAppOnlyToken(final String clientid, final String clientsecret, final String tenant) throws JSONException, ExecutionException, IOException {
+    public static void refreshAppOnlyToken()
+            throws ExecutionException, IOException, InterruptedException {
         appOnlyToken = null;
-        return getAppOnlyToken();
+        getAppOnlyToken();
     }
 
-    public static AzureToken getAppOnlyToken() throws ExecutionException, IOException, JSONException {
-
-        SecurityRealm realm = Utils.JenkinsUtil.getSecurityRealm();
-
-        if (!(realm instanceof AzureSecurityRealm)) return null;
-
-        String clientId = ((AzureSecurityRealm) realm).getClientid();
-        String clientSecret = ((AzureSecurityRealm) realm).getClientsecret();
-        String tenant = ((AzureSecurityRealm) realm).getTenant();
-
-
-        if (!Constants.DEBUG && appOnlyToken != null && appOnlyToken.getExpiry().after(new Date())) {
-            return appOnlyToken;
-        } else { // refresh token
+    public static AzureToken getAppOnlyToken() throws ExecutionException, IOException, InterruptedException {
+        if (Constants.DEBUG || appOnlyToken == null || appOnlyToken.isExpired()) {
+            // refresh token
             System.out.println("refresh app only token");
-            org.apache.http.HttpResponse response = AzureAdApiClient.getAppOnlyAccessTokenResponce(clientId, clientSecret, tenant);
-                    int statusCode = HttpHelper.getStatusCode(response);
-                    String content = HttpHelper.getContent(response);
-                    if (statusCode == 200) {
-                        JSONObject json = new JSONObject(content);
-                        String accessToken = OAuthEncoder.decode(json.getString("access_token"));
-//                        String refreshToken = OAuthEncoder.decode(json.toStr("refresh_token"));
-                        int lifeTime = Integer.parseInt(OAuthEncoder.decode(json.getString("expires_in")));
-                        Date expiry = new Date(System.currentTimeMillis() + lifeTime * 1000);
-                        appOnlyToken = new AzureToken(accessToken, "", expiry, content);
-                        return appOnlyToken;
-                    } else {
-                        return null;
-                    }
+            if (Jenkins.getActiveInstance().getSecurityRealm() instanceof AzureSecurityRealm) {
+                AzureSecurityRealm securityRealm = (AzureSecurityRealm) Jenkins.getActiveInstance().getSecurityRealm();
+                OAuth20Service oAuthService = securityRealm.getOAuthService();
+                appOnlyToken = (AzureToken) oAuthService.refreshAccessToken(appOnlyToken.getRefreshToken());
+            }
         }
-
+        return appOnlyToken;
     }
 
     @Override
@@ -182,28 +160,28 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public Object getPrincipal() {
 //        return getName();
-        return azureUserImpl.getObjectID();
-//        return azureUserImpl.getUniqueName();
+        return azureAdUser.getObjectID();
+//        return azureAdUser.getUniqueName();
     }
 
     @Override
     public String getName() {
-        return (azureUserImpl != null ? azureUserImpl.getUsername() : null);
+        return (azureAdUser != null ? azureAdUser.getUsername() : null);
     }
 
-    public AzureUserImpl getAzureUserImpl() {
-        return azureUserImpl;
+    public AzureAdUser getAzureAdUser() {
+        return azureAdUser;
     }
 
 //    public Set<String> getMemberGroups() throws ExecutionException {
-//        String userId = azureUserImpl.getObjectId();
+//        String userId = azureAdUser.getObjectId();
 //        System.out.println("getMemberGroups ");
 //        return groupsByUserId.get(userId, new Callable<Set<String>>() {
 //            @Override
 //            public Set<String> call() throws Exception {
 ////                String accessToken = azureRmToken.getToken();
-//                String tenant = azureUserImpl.getTenantID();
-//                String userId = azureUserImpl.getObjectId();
+//                String tenant = azureAdUser.getTenantID();
+//                String userId = azureAdUser.getObjectId();
 //                HttpResponse accessTokenResponce = AzureAdApiClient.getAppOnlyAccessTokenResponce(clientID, clientSecret, tenant);
 //                int statusCode = HttpHelper.getStatusCode(accessTokenResponce);
 //                String content = HttpHelper.getContent(accessTokenResponce);

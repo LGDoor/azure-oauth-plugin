@@ -4,10 +4,13 @@ package com.microsoft.jenkins.azuread;
 //import com.microsoft.azure.oauth.client.AzureActiveDirectoryApiService;
 //import com.microsoft.azure.oauth.client.AzureActiveDirectoryConfig;
 
-import com.microsoft.jenkins.azuread.client.AzureAdApiClient;
-import com.microsoft.jenkins.azuread.client.AzureCachePool;
-import com.microsoft.jenkins.azuread.oauth.AzureApi;
-import com.microsoft.jenkins.azuread.oauth.AzureToken;
+import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
+import com.microsoft.jenkins.azuread.api.AzureAdApiClient;
+import com.microsoft.jenkins.azuread.api.AzureCachePool;
+import com.microsoft.jenkins.azuread.scribe.AzureApi;
+import com.microsoft.jenkins.azuread.scribe.AzureToken;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.converters.MarshallingContext;
@@ -38,11 +41,6 @@ import org.json.JSONException;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.Header;
 import org.kohsuke.stapler.HttpResponse;
-import org.scribe.builder.ServiceBuilder;
-import org.scribe.model.OAuthConfig;
-import org.scribe.model.Token;
-import org.scribe.model.Verifier;
-import org.scribe.oauth.OAuthService;
 import org.springframework.dao.DataAccessException;
 //import sun.misc.Cache;
 
@@ -55,7 +53,6 @@ public class AzureSecurityRealm extends SecurityRealm {
 
     private static final String REFERER_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".referer";
     private static final String ACCESS_TOKEN_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".access_token";
-    private static final Token EMPTY_TOKEN = null;
     private static final Logger LOGGER = Logger.getLogger(AzureSecurityRealm.class.getName());
     private static final String azurePortalUrl = "https://ms.portal.azure.com";
     private Secret clientid;
@@ -102,48 +99,28 @@ public class AzureSecurityRealm extends SecurityRealm {
         this.tenant = Secret.fromString(tenant);
     }
 
-    private OAuthService getService(String resource) {
-        if (resource == null) resource = Constants.DEFAULT_RESOURCE;
-        AzureApi api = new AzureApi();
-        api.setTenant(this.getTenant());
-        OAuthConfig config = new OAuthConfig(clientid.getPlainText(), clientsecret.getPlainText(), getCallback(), null, null, null);
-        OAuthService service = new ServiceBuilder().provider(AzureApi.class)
-                .apiKey(clientid.getPlainText()).apiSecret(clientsecret.getPlainText()).callback(getCallback()).scope(resource)
-                .build();
-
+    OAuth20Service getOAuthService() {
+        OAuth20Service service = new ServiceBuilder(clientid.getPlainText()).apiSecret(clientsecret.getPlainText())
+                .callback(getRootUrl() + "/securityRealm/finishLogin")
+                .build(AzureApi.instance(Constants.DEFAULT_GRAPH_ENDPOINT, this.getTenant()));
         return service;
     }
 
-//    private AzureOAuth2Service service;
-
     private String getRootUrl() {
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
-            throw new RuntimeException("Jenkins is not started yet.");
-        }
-        String rootUrl = jenkins.getRootUrl();
-        return rootUrl;
-    }
-
-    private String getCallback() {
-        String rootUrl = getRootUrl();
-        if (StringUtils.endsWith(rootUrl, "/")) {
-            rootUrl = StringUtils.left(rootUrl, StringUtils.length(rootUrl) - 1);
-        }
-        String callback = rootUrl + "/securityRealm/finishLogin";
-        return callback;
+        Jenkins jenkins = Jenkins.getActiveInstance();
+        return StringUtils.stripEnd(jenkins.getRootUrl(), "/");
     }
 
     @DataBoundConstructor
-    public AzureSecurityRealm(String tenant, String clientid, String clientsecret) throws JSONException, ExecutionException, IOException {
+    public AzureSecurityRealm(String tenant, String clientid, String clientsecret)
+            throws ExecutionException, IOException, InterruptedException {
         super();
-        OAuthConfig config = new OAuthConfig(clientid, clientsecret, this.getCallback(), null, null, null);
         this.clientid = Secret.fromString(clientid);
         this.clientsecret = Secret.fromString(clientsecret);
         this.tenant = Secret.fromString(tenant);
 
         // update app only token
-        AzureAuthenticationToken.refreshAppOnlyToken(clientid, clientsecret, tenant);
+        AzureAuthenticationToken.refreshAppOnlyToken();
     }
 
 
@@ -156,26 +133,10 @@ public class AzureSecurityRealm extends SecurityRealm {
 
 
     public HttpResponse doCommenceLogin(StaplerRequest request, @Header("Referer") final String referer) throws IOException {
-
-//        // todo: debug
-//        try {
-//            AzureToken tmpToken = AzureAuthenticationToken.getAppOnlyToken(clientid, clientsecret, tenant);
-//            AzureResponse res = AzureAdApiClient.getAllGroupsDisplayNameUpnMapInTenant(tmpToken.getToken());
-//        } catch (ExecutionException e) {
-//            e.printStackTrace();
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-
         request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
-
-//        Token requestToken = service.getRequestToken();
-//        request.getSession().setAttribute(ACCESS_TOKEN_ATTRIBUTE, requestToken);
-//
-//        return new HttpRedirect(service.getAuthorizationUrl(requestToken));
-        OAuthService service = getService(Constants.DEFAULT_RESOURCE);
+        OAuth20Service service = getOAuthService();
         Utils.TimeUtil.setBeginDate();
-        return new HttpRedirect(service.getAuthorizationUrl(EMPTY_TOKEN));
+        return new HttpRedirect(service.getAuthorizationUrl());
     }
 
     public HttpResponse doFinishLogin(StaplerRequest request) throws Exception {
@@ -186,36 +147,23 @@ public class AzureSecurityRealm extends SecurityRealm {
 
         if (StringUtils.isBlank(code)) {
             LOGGER.log(Level.SEVERE, "doFinishLogin() code = null");
-//            return HttpResponses.redirectToContextRoot();
-            String rootUrl = this.getRootUrl();
-            String redirect = null;
-            if (StringUtils.endsWith(rootUrl, "/")) {
-                redirect = rootUrl + AzureAuthFailAction.POST_LOGOUT_URL;
-            } else {
-                redirect = rootUrl + "/" + AzureAuthFailAction.POST_LOGOUT_URL;
-            }
-            return HttpResponses.redirectTo(redirect);
+            return HttpResponses.redirectTo(this.getRootUrl() + AzureAuthFailAction.POST_LOGOUT_URL);
         }
 
-//        Token requestToken = (Token) request.getSession().getAttribute(ACCESS_TOKEN_ATTRIBUTE);
-        Verifier v = new Verifier(code);
-
-        OAuthService service = getService(Constants.DEFAULT_RESOURCE);
+        OAuth20Service service = getOAuthService();
 
         Utils.TimeUtil.setBeginDate();
-        Token accessToken = null;
-        accessToken = service.getAccessToken(EMPTY_TOKEN, v);
+        OAuth2AccessToken accessToken = service.getAccessToken(code);
         Utils.TimeUtil.setEndDate();
         System.out.println("Requesting access token time = " + Utils.TimeUtil.getTimeDifference() + " ms");
 
-
-        if (!accessToken.isEmpty()) {
+        if (accessToken != null) {
             AzureAuthenticationToken auth = null;
             if (accessToken instanceof AzureToken) {
                 AzureToken azureToken = (AzureToken)accessToken;
                 auth = new AzureAuthenticationToken(azureToken, clientid.getPlainText(), clientsecret.getPlainText(), 0);
 //                if (tokenType == 0) {
-//                    OAuthService service1 = getService(Constants.DEFAULT_GRAPH_ENDPOINT);
+//                    OAuthService service1 = getOAuthService(Constants.DEFAULT_GRAPH_ENDPOINT);
 //                    HttpHelper.sendGet(service1.getAuthorizationUrl(EMPTY_TOKEN), null);
 //                }
             }
@@ -255,7 +203,7 @@ public class AzureSecurityRealm extends SecurityRealm {
         // invalidateBelongingGroupsByOid
         if (auth instanceof AzureAuthenticationToken) {
             AzureAuthenticationToken azureToken = (AzureAuthenticationToken) auth;
-            String oid = azureToken.getAzureUserImpl().getObjectID();
+            String oid = azureToken.getAzureAdUser().getObjectID();
             AzureCachePool.invalidateBelongingGroupsByOid(oid);
             System.out.println("invalidateBelongingGroupsByOid cache entry when sign out");
         }
@@ -449,7 +397,7 @@ public class AzureSecurityRealm extends SecurityRealm {
 
     private String generateDescription(Authentication auth) {
         if (auth instanceof AzureAuthenticationToken) {
-            AzureUserImpl user = ((AzureAuthenticationToken) auth).getAzureUserImpl();
+            AzureAdUser user = ((AzureAuthenticationToken) auth).getAzureAdUser();
             StringBuffer description  = new StringBuffer("Azure Active Directory User\n\n");
             description.append("Given Name: " + user.getGivenName() + "\n");
             description.append("Family Name: " + user.getFamilyName() + "\n");

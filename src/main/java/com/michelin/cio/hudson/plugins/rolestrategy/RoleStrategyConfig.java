@@ -26,10 +26,10 @@
 package com.michelin.cio.hudson.plugins.rolestrategy;
 
 import com.microsoft.jenkins.azuread.*;
-import com.microsoft.jenkins.azuread.client.AzureCachePool;
-import com.microsoft.jenkins.azuread.client.AzureObject;
-import com.microsoft.jenkins.azuread.client.AzureObjectType;
-import com.microsoft.jenkins.azuread.oauth.AzureToken;
+import com.microsoft.jenkins.azuread.api.AzureCachePool;
+import com.microsoft.jenkins.azuread.api.AzureObject;
+import com.microsoft.jenkins.azuread.api.AzureObjectType;
+import com.microsoft.jenkins.azuread.scribe.AzureToken;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleMacroExtension;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.UserMacroExtension;
@@ -215,41 +215,6 @@ public class RoleStrategyConfig extends ManagementLink implements ExtensionPoint
     @Override
     public String getDisplayName() {
       return clazz.getSimpleName();
-    }
-
-    public AutoCompletionCandidates doAutoCompleteGlobalinput(@QueryParameter String value) throws JSONException, ExecutionException, IOException {
-      return generateAutoCompletion(value);
-    }
-
-    public AutoCompletionCandidates doAutoCompleteProjectinput(@QueryParameter String value) throws JSONException, ExecutionException, IOException {
-      return generateAutoCompletion(value);
-    }
-
-    public AutoCompletionCandidates doAutoCompleteSlaveinput(@QueryParameter String value) throws JSONException, ExecutionException, IOException {
-      return generateAutoCompletion(value);
-    }
-
-    public AutoCompletionCandidates generateAutoCompletion(String value) throws JSONException, ExecutionException, IOException {
-      AutoCompletionCandidates c = new AutoCompletionCandidates();
-
-      SecurityRealm realm = Utils.JenkinsUtil.getSecurityRealm();
-      if (!(realm instanceof AzureSecurityRealm)) return null;
-      AzureToken appOnlyToken = AzureAuthenticationToken.getAppOnlyToken();
-      Set<AzureObject> candidates = new HashSet<>();
-      System.out.println("get all users");
-      Set<AzureObject> users = AzureCachePool.getAllAzureObjects(AzureObjectType.User);
-      if (users != null && !users.isEmpty()) candidates.addAll(users);
-      System.out.println("get all groups");
-      Set<AzureObject>  groups = AzureCachePool.getAllAzureObjects(AzureObjectType.Group);
-      if (groups != null && !groups.isEmpty()) candidates.addAll(groups);
-
-      for (AzureObject obj : candidates) {
-        String candadateText = MessageFormat.format("{0} ({1})",obj.getDisplayName(), obj.getObjectId());
-//        if (ListUtils.longestCommonSubsequence(candadateText.toLowerCase(), value.toLowerCase()).equalsIgnoreCase(value))
-//          c.add(candadateText);
-      }
-
-      return c;
     }
 
     public FormValidation doVerifyAssignRoles(

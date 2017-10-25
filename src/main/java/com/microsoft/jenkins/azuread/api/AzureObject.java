@@ -1,6 +1,4 @@
-package com.microsoft.jenkins.azuread.client;
-
-import com.google.gson.annotations.SerializedName;
+package com.microsoft.jenkins.azuread.api;
 
 public abstract class AzureObject {
     public abstract String getObjectId();

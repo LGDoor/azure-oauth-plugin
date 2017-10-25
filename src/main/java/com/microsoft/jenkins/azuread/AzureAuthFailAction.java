@@ -38,7 +38,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 public class AzureAuthFailAction implements UnprotectedRootAction {
 
     /** The URL of the action. */
-    static final String POST_LOGOUT_URL = "azureAuthFail";
+    static final String POST_LOGOUT_URL = "/azureAuthFail";
 
     @Override
     public String getDisplayName() {
