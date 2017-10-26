@@ -1,9 +1,5 @@
 package com.microsoft.jenkins.azuread;
 
-//
-//import com.microsoft.azure.oauth.client.AzureActiveDirectoryApiService;
-//import com.microsoft.azure.oauth.client.AzureActiveDirectoryConfig;
-
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -28,23 +24,21 @@ import hudson.security.UserMayOrMayNotExistException;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
-import org.acegisecurity.AuthenticationException;
-import org.acegisecurity.AuthenticationManager;
-import org.acegisecurity.BadCredentialsException;
+import org.acegisecurity.*;
 import org.acegisecurity.context.SecurityContextHolder;
-import org.acegisecurity.userdetails.UserDetails;
-import org.acegisecurity.userdetails.UserDetailsService;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
-import org.kohsuke.stapler.*;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Header;
+import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
-import org.springframework.dao.DataAccessException;
-//import sun.misc.Cache;
+import org.kohsuke.stapler.HttpResponses;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,7 +46,6 @@ import java.util.logging.Logger;
 public class AzureSecurityRealm extends SecurityRealm {
 
     private static final String REFERER_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".referer";
-    private static final String ACCESS_TOKEN_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".access_token";
     private static final Logger LOGGER = Logger.getLogger(AzureSecurityRealm.class.getName());
     private static final String azurePortalUrl = "https://ms.portal.azure.com";
     private Secret clientid;
@@ -119,7 +112,6 @@ public class AzureSecurityRealm extends SecurityRealm {
         this.clientsecret = Secret.fromString(clientsecret);
         this.tenant = Secret.fromString(tenant);
 
-        // update app only token
         AzureAuthenticationToken.refreshAppOnlyToken();
     }
 
@@ -143,7 +135,6 @@ public class AzureSecurityRealm extends SecurityRealm {
         Utils.TimeUtil.setEndDate();
         System.out.println("Requesting oauth code time = " + Utils.TimeUtil.getTimeDifference() + " ms");
         String code = request.getParameter("code");
-//        int tokenType = Integer.parseInt(request.getParameter("state"));
 
         if (StringUtils.isBlank(code)) {
             LOGGER.log(Level.SEVERE, "doFinishLogin() code = null");
@@ -151,40 +142,27 @@ public class AzureSecurityRealm extends SecurityRealm {
         }
 
         OAuth20Service service = getOAuthService();
-
         Utils.TimeUtil.setBeginDate();
         OAuth2AccessToken accessToken = service.getAccessToken(code);
         Utils.TimeUtil.setEndDate();
         System.out.println("Requesting access token time = " + Utils.TimeUtil.getTimeDifference() + " ms");
 
         if (accessToken != null) {
-            AzureAuthenticationToken auth = null;
-            if (accessToken instanceof AzureToken) {
-                AzureToken azureToken = (AzureToken)accessToken;
-                auth = new AzureAuthenticationToken(azureToken, clientid.getPlainText(), clientsecret.getPlainText(), 0);
-//                if (tokenType == 0) {
-//                    OAuthService service1 = getOAuthService(Constants.DEFAULT_GRAPH_ENDPOINT);
-//                    HttpHelper.sendGet(service1.getAuthorizationUrl(EMPTY_TOKEN), null);
-//                }
-            }
-            else
-                return HttpResponses.redirectToContextRoot(); // TODO: redirect to token fail page
+            AzureAuthenticationToken auth = new AzureAuthenticationToken((AzureToken) accessToken);
+            Set<String> groups = AzureCachePool.getBelongingGroupsByOid(auth.getAzureAdUser().getObjectID());
+            GrantedAuthority[] authorities = groups.stream().map(AzureAdGroup::new).toArray(GrantedAuthority[]::new);
+            auth.getAzureAdUser().setAuthorities(authorities);
 
             SecurityContextHolder.getContext().setAuthentication(auth);
-
             User u = User.current();
-
             if (u != null) {
                 String description = generateDescription(auth);
                 u.setDescription(description);
-                u.setFullName(auth.getName());
+                u.setFullName(auth.getAzureAdUser().getUsername());
             }
-
         } else {
             LOGGER.log(Level.SEVERE, "doFinishLogin() accessToken = null");
         }
-
-//        test(tenant, accessToken);
 
         // redirect to referer
         String referer = (String) request.getSession().getAttribute(REFERER_ATTRIBUTE);
@@ -217,18 +195,13 @@ public class AzureSecurityRealm extends SecurityRealm {
 
     @Override
     public SecurityComponents createSecurityComponents() {
-        return new SecurityComponents(new AuthenticationManager() {
-            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-                if (authentication instanceof AzureToken) {
-                    return authentication;
-                }
-
-                throw new BadCredentialsException("Unexpected authentication type: " + authentication);
+        return new SecurityComponents(authentication -> {
+            if (authentication instanceof AzureToken) {
+                return authentication;
             }
-        }, new UserDetailsService() {
-            public UserDetails loadUserByUsername(String username)  throws UserMayOrMayNotExistException, DataAccessException {
-                throw new UserMayOrMayNotExistException("Cannot verify users in this context");
-            }
+            throw new BadCredentialsException("Unexpected authentication type: " + authentication);
+        }, username -> {
+            throw new UserMayOrMayNotExistException("Cannot verify users in this context");
         });
     }
 
@@ -288,56 +261,30 @@ public class AzureSecurityRealm extends SecurityRealm {
         }
 
         public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext context) {
-
-            String node = reader.getNodeName();
-
             reader.moveDown();
-
             AzureSecurityRealm realm = new AzureSecurityRealm();
-
-            node = reader.getNodeName();
-
+            String node = reader.getNodeName();
             String value = reader.getValue();
-
             setValue(realm, node, value);
-
             reader.moveUp();
-
+            reader.moveDown();
+            node = reader.getNodeName();
+            value = reader.getValue();
+            setValue(realm, node, value);
+            reader.moveUp();
             //
 
             reader.moveDown();
-
             node = reader.getNodeName();
-
             value = reader.getValue();
-
             setValue(realm, node, value);
-
             reader.moveUp();
-
-            //
-
-            reader.moveDown();
-
-            node = reader.getNodeName();
-
-            value = reader.getValue();
-
-            setValue(realm, node, value);
-
-            reader.moveUp();
-
-
 
             if (reader.hasMoreChildren()) {
                 reader.moveDown();
-
                 node = reader.getNodeName();
-
                 value = reader.getValue();
-
                 setValue(realm, node, value);
-
                 reader.moveUp();
             }
             return realm;
@@ -406,7 +353,6 @@ public class AzureSecurityRealm extends SecurityRealm {
             description.append("Tenant ID: " + user.getTenantID() + "\n");
             return description.toString();
         }
-
         return "";
     }
 

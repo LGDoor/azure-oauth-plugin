@@ -101,7 +101,7 @@ public class AzureAdApiClient {
     /*
     * delegate permission: Directory.AccessAsUser.All
     * */
-    public static AzureResponse getGroupsByUserId(String accessToken, String oid) throws IOException, JSONException {
+    public static AzureResponse<Set<String>> getGroupsByUserId(String accessToken, String oid) throws IOException, JSONException {
 //        Utils.TimeUtil.setBeginDate();
         String url = String.format(Constants.DEFAULT_GRAPH_ENDPOINT + Constants.DEFAULT_GRAPH_VERSION + "users/%s/getMemberGroups", oid);
 //        String url = String.format(Constants.DEFAULT_GRAPH_ENDPOINT + Constants.DEFAULT_GRAPH_VERSION + "%s/users/%s/getMemberGroups?client-version=1.6", tenant, userID);
@@ -110,9 +110,9 @@ public class AzureAdApiClient {
         body.put("securityEnabledOnly", false);
         HttpResponse response = HttpHelper.sendPost(url, accessToken, body, ContentType.APPLICATION_JSON);
 
-        return new AzureResponse(response, 200) {
+        return new AzureResponse<Set<String>>(response, 200) {
             @Override
-            public Object perform(String responseContent) throws JSONException {
+            public Set<String> perform(String responseContent) throws JSONException {
 //                public Set<String> getGroupsByUserId() throws JSONException {
                 Utils.TimeUtil.setEndDate();
 
@@ -172,13 +172,13 @@ public class AzureAdApiClient {
         return response;
     }
 
-    public static AzureResponse getServicePrincipalIdByAppId(String tenant, final String appId, String accessToken) throws IOException, JSONException {
+    public static AzureResponse<String> getServicePrincipalIdByAppId(String tenant, final String appId, String accessToken) throws IOException, JSONException {
         String url = String.format(Constants.DEFAULT_GRAPH_ENDPOINT + Constants.BETA_GRAPH_VERSION + "servicePrincipals");
         HttpResponse response = HttpHelper.sendGet(url, accessToken);
 
-        return new AzureResponse(response, 200) {
+        return new AzureResponse<String>(response, 200) {
             @Override
-            public Object perform(String responseContent) throws JSONException {
+            public String perform(String responseContent) throws JSONException {
                 if (!isSuccess()) return null;
                 JSONObject json = new JSONObject(responseContent);
                 JSONArray arr = json.getJSONArray("value");
@@ -193,13 +193,13 @@ public class AzureAdApiClient {
         };
     }
 
-    public static AzureResponse getAzureRbacRoleId(String subscription, String accessToken) throws IOException, JSONException {
+    public static AzureResponse<String> getAzureRbacRoleId(String subscription, String accessToken) throws IOException, JSONException {
         String url = String.format(Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT + "subscriptions/%s/providers/Microsoft.Authorization/roleDefinitions?api-version=2015-07-01", subscription);
         HttpResponse response = HttpHelper.sendGet(url, accessToken);
 
-        return new AzureResponse(response, 200) {
+        return new AzureResponse<String>(response, 200) {
             @Override
-            public Object perform(String responseContent) throws JSONException {
+            public String perform(String responseContent) throws JSONException {
 //                public String getRoleId() throws JSONException {
                     if (!isSuccess()) return null;
                     JSONObject json = new JSONObject(responseContent);
@@ -217,7 +217,7 @@ public class AzureAdApiClient {
         };
     }
 
-    public static AzureResponse assginRbacRoleToServicePrincipal(String subscription, String accessToken, String roleDefinitionId, String principalId) throws JSONException, IOException {
+    public static AzureResponse<Void> assginRbacRoleToServicePrincipal(String subscription, String accessToken, String roleDefinitionId, String principalId) throws JSONException, IOException {
         UUID guid = java.util.UUID.randomUUID();
         String url = String.format(Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT + "subscriptions/%s/providers/microsoft.authorization/roleassignments/%s?api-version=2015-07-01", subscription, guid);
 
@@ -228,21 +228,21 @@ public class AzureAdApiClient {
         body.put("properties", properties);
         HttpResponse response = HttpHelper.sendPut(url, accessToken, body, ContentType.APPLICATION_JSON);
 
-        return new AzureResponse(response, 201) {
+        return new AzureResponse<Void>(response, 201) {
             @Override
-            public Object perform(String responseContent) throws JSONException {
+            public Void perform(String responseContent) throws JSONException {
                 return null;
             }
         };
     }
 
-    public static AzureResponse getSubscriptions(String accessToken) throws IOException, JSONException {
+    public static AzureResponse<Map<String, String>> getSubscriptions(String accessToken) throws IOException, JSONException {
         String url = Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT +  "subscriptions?api-version=2016-06-01";
         HttpResponse response = HttpHelper.sendGet(url, accessToken);
 
-        return new AzureResponse(response, 200) {
+        return new AzureResponse<Map<String, String>>(response, 200) {
             @Override
-            public Object perform(String responseContent) throws JSONException {
+            public Map<String, String> perform(String responseContent) throws JSONException {
 //                public Map<String, String> getSubscriptions() throws JSONException {
                     if (!isSuccess()) return null;
                     JSONObject json = new JSONObject(responseContent);
@@ -259,12 +259,12 @@ public class AzureAdApiClient {
         };
     }
 
-    public static AzureResponse getAllAzureObjects(String accessToken, final AzureObjectType type) throws IOException, JSONException {
+    public static AzureResponse<Set<AzureObject>> getAllAzureObjects(String accessToken, final AzureObjectType type) throws IOException, JSONException {
         String url = Constants.DEFAULT_GRAPH_ENDPOINT + Constants.DEFAULT_GRAPH_VERSION + type.getStringType();
         HttpResponse response = HttpHelper.sendGet(url, accessToken);
-        return new AzureResponse(response, 200) {
+        return new AzureResponse<Set<AzureObject>>(response, 200) {
             @Override
-            public Object perform(String responseContent) throws JSONException {
+            public Set<AzureObject> perform(String responseContent) throws JSONException {
                 if (isFail()) return null;
                 JSONObject json = new JSONObject(responseContent);
                 JSONArray objs = json.getJSONArray("value");

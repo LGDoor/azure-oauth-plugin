@@ -52,36 +52,30 @@ public class AzureCachePool {
 //        }
 
 
-        Set<String> set = null;
         try {
-            set = belongingGroupsByOid.get(oid, new Callable<Set<String>>() {
-                @Override
-                public Set<String> call() throws Exception {
-                    Utils.TimeUtil.setBeginDate();
-
-                    Authentication auth = Jenkins.getAuthentication();
-                    if (!(auth instanceof AzureAuthenticationToken)) return new HashSet<String>();
-//            String aadAccessToken = ((AzureAuthenticationToken) auth).getAzureAdToken().getToken();
-                    AzureToken token = AzureAuthenticationToken.getAppOnlyToken();
-                    String oid = ((AzureAuthenticationToken) auth).getAzureAdUser().getObjectID();
-                    AzureResponse<Set<String>> res = AzureAdApiClient.getGroupsByUserId(token.getAccessToken(), oid);
-                    if (!res.isSuccess()) {
-                        System.out.println("getBelongingGroupsByOid: set is empty");
-                        System.out.println("error: " + res.getResponseContent());
-                        return new HashSet<String>();
-                    }
-                    Utils.TimeUtil.setEndDate();
-                    System.out.println("getBelongingGroupsByOid time (debug) = " + Utils.TimeUtil.getTimeDifference() + "ms");
-                    System.out.println("getBelongingGroupsByOid: set = " + res.<Set<String>>get());
-                    return res.get();
+            Set<String> set = belongingGroupsByOid.get(oid, () -> {
+                Utils.TimeUtil.setBeginDate();
+                Authentication auth = Jenkins.getAuthentication();
+                if (!(auth instanceof AzureAuthenticationToken)) return new HashSet<>();
+                AzureToken token = AzureAuthenticationToken.getAppOnlyToken();
+                String oid1 = ((AzureAuthenticationToken) auth).getAzureAdUser().getObjectID();
+                AzureResponse<Set<String>> res = AzureAdApiClient.getGroupsByUserId(token.getAccessToken(), oid1);
+                if (!res.isSuccess()) {
+                    System.out.println("getBelongingGroupsByOid: set is empty");
+                    System.out.println("error: " + res.getResponseContent());
+                    return new HashSet<>();
                 }
+                Utils.TimeUtil.setEndDate();
+                System.out.println("getBelongingGroupsByOid time (debug) = " + Utils.TimeUtil.getTimeDifference() + "ms");
+                System.out.println("getBelongingGroupsByOid: set = " + res.<Set<String>>get());
+                return res.get();
             });
-            if (Constants.DEBUG == true) belongingGroupsByOid.invalidate(oid);
+            if (Constants.DEBUG) {
+                belongingGroupsByOid.invalidate(oid);
+            }
             return set;
-
         } catch (ExecutionException e) {
             e.printStackTrace();
-//            invalidateBelongingGroupsByOid(oid);
             return null;
         }
 
@@ -117,17 +111,14 @@ public class AzureCachePool {
             e.printStackTrace();
 //            invalidateAllObject(type);
             return null;
-        } catch (CacheLoader.InvalidCacheLoadException e) {
-            e.printStackTrace();
-//            invalidateAllObject(type);
-            return null;
         }
     }
 
 
     public static void invalidateBelongingGroupsByOid(String userId) {
-            belongingGroupsByOid.invalidate(userId);
+        belongingGroupsByOid.invalidate(userId);
     }
+
     public static void invalidateAllObject(AzureObjectType type) {
         allAzureObjects.invalidate(type);
     }

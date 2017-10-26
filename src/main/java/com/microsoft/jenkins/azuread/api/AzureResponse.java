@@ -9,11 +9,11 @@ import java.io.IOException;
 /**
  * Created by t-wanl on 9/1/2017.
  */
-abstract public class AzureResponse <T> {
+abstract public class AzureResponse<T> {
     private int statusCode;
     private int successCode;
     private String responseContent;
-    private Object object;
+    private T object;
 
     public AzureResponse(HttpResponse response, int successCode) throws IOException, JSONException {
         String responseContent = HttpHelper.getContent(response);
@@ -27,7 +27,7 @@ abstract public class AzureResponse <T> {
         }
     }
 
-    abstract public Object perform(String responseContent) throws JSONException;
+    abstract protected T perform(String responseContent) throws JSONException;
 
 
     public int getStatusCode() {
@@ -45,17 +45,12 @@ abstract public class AzureResponse <T> {
     public boolean isSuccess() {
         return successCode == statusCode;
     }
+
     public boolean isFail() {
         return !isSuccess();
     }
 
     public T get() {
-        return (T) this.object;
+        return this.object;
     }
-
-
-
-
-
-
 }

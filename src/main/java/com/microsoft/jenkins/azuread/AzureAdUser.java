@@ -10,35 +10,39 @@ import org.apache.commons.lang.StringUtils;
 
 public class AzureAdUser implements UserDetails {
 
-    @SerializedName("name")
-    public String userName;
-    @SerializedName("given_name")
-    public String givenName;
-    @SerializedName("family_name")
-    public String familyName;
-    @SerializedName("unique_name")
-    public String uniqueName; // real unique principal name
-    @SerializedName("tid")
-    public String tenantID;
-    @SerializedName("oid")
-    public String objectID;
+    private String userName;
 
-    public AzureAdUser() {
-        super();
+    private String givenName;
+
+    private String familyName;
+
+    private String uniqueName;
+
+    private String tenantID;
+
+    private String objectID;
+
+    private transient volatile GrantedAuthority[] authorities;
+
+    private AzureAdUser() {
+        authorities = new GrantedAuthority[] { SecurityRealm.AUTHENTICATED_AUTHORITY };
     }
 
     public static AzureAdUser createFromJwt(String jwt) {
         if (StringUtils.isEmpty(jwt))
             return null;
 
-        DecodedJWT decode = JWT.decode(jwt);
+        DecodedJWT decoded = JWT.decode(jwt);
         AzureAdUser user = new AzureAdUser();
-        user.userName = decode.getClaim("name").asString();
-        user.givenName = decode.getClaim("given_name").asString();
-        user.familyName = decode.getClaim("family_name").asString();
-        user.uniqueName = decode.getClaim("unique_name").asString();
-        user.tenantID = decode.getClaim("tid").asString();
-        user.objectID = decode.getClaim("oid").asString();
+        user.userName = decoded.getClaim("name").asString();
+        user.givenName = decoded.getClaim("given_name").asString();
+        user.familyName = decoded.getClaim("family_name").asString();
+        user.uniqueName = decoded.getClaim("unique_name").asString();
+        user.tenantID = decoded.getClaim("tid").asString();
+        user.objectID = decoded.getClaim("oid").asString();
+        if (user.objectID == null || user.userName == null) {
+            throw new RuntimeException("Invalid id token: " + decoded.getPayload());
+        }
         return user;
     }
 
@@ -46,18 +50,35 @@ public class AzureAdUser implements UserDetails {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         AzureAdUser that = (AzureAdUser) o;
-        return uniqueName.equals(that.uniqueName);
+
+        if (userName != null ? !userName.equals(that.userName) : that.userName != null) return false;
+        if (givenName != null ? !givenName.equals(that.givenName) : that.givenName != null) return false;
+        if (familyName != null ? !familyName.equals(that.familyName) : that.familyName != null) return false;
+        if (uniqueName != null ? !uniqueName.equals(that.uniqueName) : that.uniqueName != null) return false;
+        if (tenantID != null ? !tenantID.equals(that.tenantID) : that.tenantID != null) return false;
+        return objectID.equals(that.objectID);
     }
 
     @Override
     public int hashCode() {
-        return uniqueName.hashCode();
+        int result = userName != null ? userName.hashCode() : 0;
+        result = 31 * result + (givenName != null ? givenName.hashCode() : 0);
+        result = 31 * result + (familyName != null ? familyName.hashCode() : 0);
+        result = 31 * result + (uniqueName != null ? uniqueName.hashCode() : 0);
+        result = 31 * result + (tenantID != null ? tenantID.hashCode() : 0);
+        result = 31 * result + objectID.hashCode();
+        return result;
     }
 
     @Override
     public GrantedAuthority[] getAuthorities() {
-        return new GrantedAuthority[] { SecurityRealm.AUTHENTICATED_AUTHORITY };
+        return authorities.clone();
+    }
+
+    public void setAuthorities(GrantedAuthority[] authorities) {
+        this.authorities = authorities;
     }
 
     @Override

@@ -8,9 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 import java.util.Date;
 import java.util.Objects;
 
-/**
- * @author <a href='mailto:donbeave@gmail.com'>Alexey Zhokhov</a>
- */
+
 public class AzureToken extends OAuth2AccessToken {
 
     private Long expiryOn;
@@ -58,14 +56,6 @@ public class AzureToken extends OAuth2AccessToken {
             return false;
         }
         return Objects.equals(idToken, other.getIdToken());
-    }
-
-    private String base64UrlDecode(String input) {
-        String result = null;
-        Base64 decoder = new Base64(true);
-        byte[] decodedBytes = decoder.decode(input);
-        result = new String(decodedBytes);
-        return result;
     }
 
     public Long getExpiryOn() {
