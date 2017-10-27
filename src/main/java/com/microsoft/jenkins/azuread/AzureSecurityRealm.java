@@ -27,10 +27,10 @@ import hudson.security.UserMayOrMayNotExistException;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
-import org.acegisecurity.BadCredentialsException;
-import org.acegisecurity.GrantedAuthority;
+import org.acegisecurity.*;
 import org.acegisecurity.context.SecurityContextHolder;
+import org.acegisecurity.userdetails.UserDetails;
+import org.acegisecurity.userdetails.UserDetailsService;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -40,6 +40,7 @@ import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.springframework.dao.DataAccessException;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -164,7 +165,11 @@ public class AzureSecurityRealm extends SecurityRealm {
         if (accessToken != null) {
             AzureAuthenticationToken auth = new AzureAuthenticationToken((AzureToken) accessToken);
             Collection<String> groups = AzureCachePool.getBelongingGroupsByOid(auth.getAzureAdUser().getObjectID());
-            GrantedAuthority[] authorities = groups.stream().map(AzureAdGroup::new).toArray(GrantedAuthority[]::new);
+            GrantedAuthority[] authorities = new GrantedAuthority[groups.size()];
+            int i = 0;
+            for (String objectId : groups) {
+                authorities[i++] = new AzureAdGroup(objectId);
+            }
             auth.getAzureAdUser().setAuthorities(authorities);
 
             SecurityContextHolder.getContext().setAuthentication(auth);
@@ -209,13 +214,19 @@ public class AzureSecurityRealm extends SecurityRealm {
 
     @Override
     public SecurityComponents createSecurityComponents() {
-        return new SecurityComponents(authentication -> {
-            if (authentication instanceof AzureToken) {
-                return authentication;
+        return new SecurityComponents(new AuthenticationManager() {
+            @Override
+            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+                if (authentication instanceof AzureToken) {
+                    return authentication;
+                }
+                throw new BadCredentialsException("Unexpected authentication type: " + authentication);
             }
-            throw new BadCredentialsException("Unexpected authentication type: " + authentication);
-        }, username -> {
-            throw new UserMayOrMayNotExistException("Cannot verify users in this context");
+        }, new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DataAccessException {
+                throw new UserMayOrMayNotExistException("Cannot verify users in this context");
+            }
         });
     }
 

@@ -20,10 +20,9 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AzureAdMatrixAuthorizationStategy extends GlobalMatrixAuthorizationStrategy {
 
@@ -39,7 +38,7 @@ public class AzureAdMatrixAuthorizationStategy extends GlobalMatrixAuthorization
         @Override
         @Nonnull
         public String getDisplayName() {
-            return "Azure AD Matrix";
+            return "Azure Active Directory Matrix-based security";
         }
 
         public AutoCompletionCandidates doAutoCompleteUserOrGroup(@QueryParameter String value)
@@ -52,20 +51,25 @@ public class AzureAdMatrixAuthorizationStategy extends GlobalMatrixAuthorization
             if (!(realm instanceof AzureSecurityRealm)) return null;
             AzureTokenCredentials cred = ((AzureSecurityRealm) realm).getAzureCredential();
 
+            List<AzureObject> candidates = new ArrayList<>();
             System.out.println("search users with prefix: " + value);
             Azure.Authenticated authenticated = Azure.authenticate(cred);
             PagedList<UserInner> matchedUsers = authenticated.activeDirectoryUsers()
                     .inner().list("startswith(displayName,'" + value +"')");
-            Stream<AzureObject> stream = matchedUsers.stream().map(u -> new AzureObject(u.objectId(), u.displayName()));
+            for (UserInner user : matchedUsers.currentPage().items()) {
+                candidates.add(new AzureObject(user.objectId(), user.displayName()));
+                if (candidates.size() > 20) break;
+            }
 
             if (!matchedUsers.hasNextPage()) {
                 System.out.println("search groups with prefix " + value);
                 PagedList<ADGroupInner> matchedGroups = authenticated.activeDirectoryGroups()
                         .inner().list("startswith(displayName,'" + value +"')");
-                stream = Stream.concat(stream,
-                        matchedGroups.stream().map(g -> new AzureObject(g.objectId(), g.displayName())));
+                for (ADGroupInner group : matchedGroups.currentPage().items()) {
+                    candidates.add(new AzureObject(group.objectId(), group.displayName()));
+                    if (candidates.size() > 20) break;
+                }
             }
-            List<AzureObject> candidates = stream.limit(20).collect(Collectors.toList());
 
             for (AzureObject obj : candidates) {
                 String candadateText = MessageFormat.format("{0} ({1})",obj.getDisplayName(), obj.getObjectId());
