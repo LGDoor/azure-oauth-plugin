@@ -3,9 +3,7 @@ package com.microsoft.jenkins.azuread.scribe;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.scribejava.core.model.OAuth2AccessToken;
-import org.apache.commons.codec.binary.Base64;
 
-import java.util.Date;
 import java.util.Objects;
 
 

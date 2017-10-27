@@ -3,6 +3,7 @@ package com.microsoft.jenkins.azuread;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.google.common.base.Stopwatch;
 import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.credentials.AzureTokenCredentials;
@@ -32,7 +33,6 @@ import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
-import org.json.JSONException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Header;
 import org.kohsuke.stapler.HttpRedirect;
@@ -44,12 +44,14 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AzureSecurityRealm extends SecurityRealm {
 
     private static final String REFERER_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".referer";
+    private static final String TIMESTAMP_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".beginTime";
     private static final Logger LOGGER = Logger.getLogger(AzureSecurityRealm.class.getName());
     private static final String azurePortalUrl = "https://ms.portal.azure.com";
     private Secret clientId;
@@ -138,13 +140,14 @@ public class AzureSecurityRealm extends SecurityRealm {
     public HttpResponse doCommenceLogin(StaplerRequest request, @Header("Referer") final String referer) throws IOException {
         request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
         OAuth20Service service = getOAuthService();
-        Utils.TimeUtil.setBeginDate();
+        request.getSession().setAttribute(TIMESTAMP_ATTRIBUTE, System.currentTimeMillis());
         return new HttpRedirect(service.getAuthorizationUrl());
     }
 
     public HttpResponse doFinishLogin(StaplerRequest request) throws Exception {
-        Utils.TimeUtil.setEndDate();
-        System.out.println("Requesting oauth code time = " + Utils.TimeUtil.getTimeDifference() + " ms");
+        long beginTime = (Long)request.getSession().getAttribute(TIMESTAMP_ATTRIBUTE);
+        long endTime = System.currentTimeMillis();
+        System.out.println("Requesting oauth code time = " + (endTime - beginTime) + " ms");
         String code = request.getParameter("code");
 
         if (StringUtils.isBlank(code)) {
@@ -153,10 +156,10 @@ public class AzureSecurityRealm extends SecurityRealm {
         }
 
         OAuth20Service service = getOAuthService();
-        Utils.TimeUtil.setBeginDate();
+        Stopwatch stopwatch = Stopwatch.createStarted();
         OAuth2AccessToken accessToken = service.getAccessToken(code);
-        Utils.TimeUtil.setEndDate();
-        System.out.println("Requesting access token time = " + Utils.TimeUtil.getTimeDifference() + " ms");
+        stopwatch.stop();
+        System.out.println("Requesting access token time = " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
         if (accessToken != null) {
             AzureAuthenticationToken auth = new AzureAuthenticationToken((AzureToken) accessToken);
@@ -320,13 +323,8 @@ public class AzureSecurityRealm extends SecurityRealm {
     public static final class DescriptorImpl extends Descriptor<SecurityRealm> {
 
         @Override
-        public String getHelpFile() {
-            return "";
-        }
-
-        @Override
         public String getDisplayName() {
-            return "Azure OAuth Plugin";
+            return "Azure Active Directory";
         }
 
         public DescriptorImpl() {
@@ -339,7 +337,7 @@ public class AzureSecurityRealm extends SecurityRealm {
 
         public FormValidation doVerifyConfiguration(@QueryParameter final String clientId,
                                                     @QueryParameter final String clientSecret,
-                                                    @QueryParameter final String tenant) throws IOException, JSONException, ExecutionException {
+                                                    @QueryParameter final String tenant) throws IOException, ExecutionException {
 
 
             AzureTokenCredentials credential = new ApplicationTokenCredentials(clientId,

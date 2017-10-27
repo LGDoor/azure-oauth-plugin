@@ -14,7 +14,7 @@
     <version>0.1</version>
 
     <name>Azure AD Plugin</name>
-    <description>A Jenkins authentication &amp; authorization plugin that delegates to Azure OAuth</description>
+    <description>A Jenkins authentication &amp; authorization plugin for Azure Active Directory</description>
 
     <packaging>hpi</packaging>
 
@@ -23,6 +23,11 @@
             <id>t-wanl</id>
             <name>Wanpeng Li</name>
             <email>t-wanl@microsoft.com</email>
+        </developer>
+        <developer>
+            <id>xianyu</id>
+            <name>Raphael Yu</name>
+            <email>xianyu@microsoft.com</email>
         </developer>
     </developers>
 
@@ -79,11 +84,6 @@
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
             <version>3.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20070829</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure</groupId>

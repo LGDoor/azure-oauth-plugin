@@ -2,7 +2,6 @@ package com.microsoft.jenkins.azuread;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.gson.annotations.SerializedName;
 import hudson.security.SecurityRealm;
 import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.userdetails.UserDetails;

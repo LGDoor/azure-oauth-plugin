@@ -1,6 +1,5 @@
 package com.microsoft.jenkins.azuread.scribe;
 
-import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.OAuthConfig;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.oauth.OAuth20Service;

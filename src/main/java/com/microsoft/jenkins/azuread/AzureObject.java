@@ -1,14 +1,10 @@
-package com.microsoft.jenkins.azuread.api;
-
-import com.google.gson.annotations.SerializedName;
+package com.microsoft.jenkins.azuread;
 
 public class AzureObject {
-    @SerializedName("displayName")
-    private String displayName;
-    @SerializedName("id")
-    private String objectId;
 
-    public AzureObject() {}
+    private String displayName;
+
+    private String objectId;
 
     public AzureObject(String objectId, String displayName) {
         this.objectId = objectId;

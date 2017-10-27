@@ -1,18 +1,18 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:section title="Global Azure OAuth Settings" >
-        <f:entry title="Client ID"  field="clientId" help="/plugin/azure-oauth-plugin/help/realm/client-id-help.html" >
+    <f:block>
+        <f:entry title="Client ID"  field="clientId" help="/plugin/azure-ad/help/help-client-id.html" >
             <f:textbox />
         </f:entry>
 
-        <f:entry title="Client Secret" field="clientSecret" help="/plugin/azure-oauth-plugin/help/realm/client-secret-help.html">
+        <f:entry title="Client Secret" field="clientSecret" help="/plugin/azure-ad/help/help-client-secret.html">
             <f:password />
         </f:entry>
 
-        <f:entry title="Tenant" field="tenant" help="/plugin/azure-oauth-plugin/help/realm/tenant-help.html">
+        <f:entry title="Tenant" field="tenant" help="/plugin/azure-ad/help/help-tenant.html">
             <f:textbox />
         </f:entry>
 
         <f:validateButton title="Verify Application" method="verifyConfiguration" progress="Verifying..." with="clientId,clientSecret,tenant" ></f:validateButton>
-    </f:section>
+    </f:block>
 </j:jelly>
