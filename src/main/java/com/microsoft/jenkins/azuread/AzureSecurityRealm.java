@@ -130,12 +130,10 @@ public class AzureSecurityRealm extends SecurityRealm {
     }
 
 
-
     public AzureSecurityRealm() {
         super();
         LOGGER.log(Level.FINE, "AzureSecurityRealm()");
     }
-
 
 
     public HttpResponse doCommenceLogin(StaplerRequest request, @Header("Referer") final String referer) throws IOException {
@@ -146,9 +144,11 @@ public class AzureSecurityRealm extends SecurityRealm {
     }
 
     public HttpResponse doFinishLogin(StaplerRequest request) throws Exception {
-        long beginTime = (Long)request.getSession().getAttribute(TIMESTAMP_ATTRIBUTE);
-        long endTime = System.currentTimeMillis();
-        System.out.println("Requesting oauth code time = " + (endTime - beginTime) + " ms");
+        Long beginTime = (Long) request.getSession().getAttribute(TIMESTAMP_ATTRIBUTE);
+        if (beginTime != null) {
+            long endTime = System.currentTimeMillis();
+            System.out.println("Requesting oauth code time = " + (endTime - beginTime) + " ms");
+        }
         String code = request.getParameter("code");
 
         if (StringUtils.isBlank(code)) {
@@ -209,7 +209,7 @@ public class AzureSecurityRealm extends SecurityRealm {
         if (j.hasPermission(Jenkins.READ)) {
             return super.getPostLogOutUrl(req, auth);
         }
-        return req.getContextPath()+ "/" + AzureLogoutAction.POST_LOGOUT_URL;
+        return req.getContextPath() + "/" + AzureLogoutAction.POST_LOGOUT_URL;
     }
 
     @Override
@@ -368,7 +368,7 @@ public class AzureSecurityRealm extends SecurityRealm {
     private String generateDescription(Authentication auth) {
         if (auth instanceof AzureAuthenticationToken) {
             AzureAdUser user = ((AzureAuthenticationToken) auth).getAzureAdUser();
-            StringBuffer description  = new StringBuffer("Azure Active Directory User\n\n");
+            StringBuffer description = new StringBuffer("Azure Active Directory User\n\n");
             description.append("Given Name: " + user.getGivenName() + "\n");
             description.append("Family Name: " + user.getFamilyName() + "\n");
             description.append("Unique Principal Name: " + user.getUniqueName() + "\n");
