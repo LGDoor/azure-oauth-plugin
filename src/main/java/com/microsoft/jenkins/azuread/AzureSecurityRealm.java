@@ -3,8 +3,10 @@ package com.microsoft.jenkins.azuread;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
-import com.microsoft.jenkins.azuread.api.AzureAdApiClient;
-import com.microsoft.jenkins.azuread.api.AzureCachePool;
+import com.microsoft.azure.AzureEnvironment;
+import com.microsoft.azure.credentials.ApplicationTokenCredentials;
+import com.microsoft.azure.credentials.AzureTokenCredentials;
+import com.microsoft.azure.management.Azure;
 import com.microsoft.jenkins.azuread.scribe.AzureApi;
 import com.microsoft.jenkins.azuread.scribe.AzureToken;
 import com.thoughtworks.xstream.converters.ConversionException;
@@ -24,7 +26,9 @@ import hudson.security.UserMayOrMayNotExistException;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
-import org.acegisecurity.*;
+import org.acegisecurity.Authentication;
+import org.acegisecurity.BadCredentialsException;
+import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
@@ -38,7 +42,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,16 +52,16 @@ public class AzureSecurityRealm extends SecurityRealm {
     private static final String REFERER_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".referer";
     private static final Logger LOGGER = Logger.getLogger(AzureSecurityRealm.class.getName());
     private static final String azurePortalUrl = "https://ms.portal.azure.com";
-    private Secret clientid;
-    private Secret clientsecret;
+    private Secret clientId;
+    private Secret clientSecret;
     private Secret tenant;
 
     public String getClientIdSecret() {
-        return clientid.getEncryptedValue();
+        return clientId.getEncryptedValue();
     }
 
     public String getClientSecretSecret() {
-        return clientsecret.getEncryptedValue();
+        return clientSecret.getEncryptedValue();
     }
 
     public String getTenantSecret() {
@@ -68,20 +72,20 @@ public class AzureSecurityRealm extends SecurityRealm {
         return azurePortalUrl;
     }
 
-    public String getClientid() {
-        return clientid.getPlainText();
+    public String getClientId() {
+        return clientId.getPlainText();
     }
 
-    public void setClientid(String clientid) {
-        this.clientid = Secret.fromString(clientid);
+    public void setClientId(String clientId) {
+        this.clientId = Secret.fromString(clientId);
     }
 
-    public String getClientsecret() {
-        return clientsecret.getPlainText();
+    public String getClientSecret() {
+        return clientSecret.getPlainText();
     }
 
-    public void setClientsecret(String clientsecret) {
-        this.clientsecret = Secret.fromString(clientsecret);
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = Secret.fromString(clientSecret);
     }
 
     public String getTenant() {
@@ -93,11 +97,20 @@ public class AzureSecurityRealm extends SecurityRealm {
     }
 
     OAuth20Service getOAuthService() {
-        OAuth20Service service = new ServiceBuilder(clientid.getPlainText()).apiSecret(clientsecret.getPlainText())
+        OAuth20Service service = new ServiceBuilder(clientId.getPlainText()).apiSecret(clientSecret.getPlainText())
                 .callback(getRootUrl() + "/securityRealm/finishLogin")
                 .build(AzureApi.instance(Constants.DEFAULT_GRAPH_ENDPOINT, this.getTenant()));
         return service;
     }
+
+    AzureTokenCredentials getAzureCredential() throws IOException {
+        return new ApplicationTokenCredentials(
+                getClientId(),
+                getTenant(),
+                getClientSecret(),
+                AzureEnvironment.AZURE);
+    }
+
 
     private String getRootUrl() {
         Jenkins jenkins = Jenkins.getActiveInstance();
@@ -105,14 +118,12 @@ public class AzureSecurityRealm extends SecurityRealm {
     }
 
     @DataBoundConstructor
-    public AzureSecurityRealm(String tenant, String clientid, String clientsecret)
+    public AzureSecurityRealm(String tenant, String clientId, String clientSecret)
             throws ExecutionException, IOException, InterruptedException {
         super();
-        this.clientid = Secret.fromString(clientid);
-        this.clientsecret = Secret.fromString(clientsecret);
+        this.clientId = Secret.fromString(clientId);
+        this.clientSecret = Secret.fromString(clientSecret);
         this.tenant = Secret.fromString(tenant);
-
-        AzureAuthenticationToken.refreshAppOnlyToken();
     }
 
 
@@ -149,7 +160,7 @@ public class AzureSecurityRealm extends SecurityRealm {
 
         if (accessToken != null) {
             AzureAuthenticationToken auth = new AzureAuthenticationToken((AzureToken) accessToken);
-            Set<String> groups = AzureCachePool.getBelongingGroupsByOid(auth.getAzureAdUser().getObjectID());
+            Collection<String> groups = AzureCachePool.getBelongingGroupsByOid(auth.getAzureAdUser().getObjectID());
             GrantedAuthority[] authorities = groups.stream().map(AzureAdGroup::new).toArray(GrantedAuthority[]::new);
             auth.getAzureAdUser().setAuthorities(authorities);
 
@@ -252,7 +263,7 @@ public class AzureSecurityRealm extends SecurityRealm {
             writer.endNode();
 
             writer.startNode("clientsecret");
-            writer.setValue(realm.getClientsecret());
+            writer.setValue(realm.getClientSecret());
             writer.endNode();
 
             writer.startNode("tenant");
@@ -293,9 +304,9 @@ public class AzureSecurityRealm extends SecurityRealm {
         private void setValue(AzureSecurityRealm realm, String node, String value) {
 
             if (node.equalsIgnoreCase("clientid")) {
-                realm.setClientid(value);
+                realm.setClientId(value);
             } else if (node.equalsIgnoreCase("clientsecret")) {
-                realm.setClientsecret(value);
+                realm.setClientSecret(value);
             } else if (node.equalsIgnoreCase("tenant")) {
                 realm.setTenant(value);
             } else {
@@ -326,16 +337,19 @@ public class AzureSecurityRealm extends SecurityRealm {
             super(clazz);
         }
 
-        public FormValidation doVerifyConfiguration(@QueryParameter final String clientid,
-                                                    @QueryParameter final String clientsecret,
+        public FormValidation doVerifyConfiguration(@QueryParameter final String clientId,
+                                                    @QueryParameter final String clientSecret,
                                                     @QueryParameter final String tenant) throws IOException, JSONException, ExecutionException {
 
 
-            org.apache.http.HttpResponse response = AzureAdApiClient.getAppOnlyAccessTokenResponce(clientid, clientsecret, tenant);
-            int statusCode = HttpHelper.getStatusCode(response);
-            String content = HttpHelper.getContent(response);
-            if (statusCode != 200) {
-                return FormValidation.error(content);
+            AzureTokenCredentials credential = new ApplicationTokenCredentials(clientId,
+                    tenant,
+                    clientSecret,
+                    AzureEnvironment.AZURE);
+            try {
+                Azure.authenticate(credential).subscriptions().list();
+            } catch (Exception ex) {
+                return FormValidation.error(ex.getMessage());
             }
 
             return FormValidation.ok("Successfully verified");

@@ -27,7 +27,7 @@ package com.michelin.cio.hudson.plugins.rolestrategy;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.microsoft.jenkins.azuread.AzureAuthenticationToken;
-import com.microsoft.jenkins.azuread.api.AzureCachePool;
+import com.microsoft.jenkins.azuread.AzureCachePool;
 import com.microsoft.jenkins.azuread.AzureSecurityRealm;
 import com.microsoft.jenkins.azuread.Utils;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.Macro;
@@ -38,15 +38,7 @@ import hudson.model.User;
 import hudson.security.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -122,7 +114,7 @@ public class RoleMap {
 //          if (accessToken == null) return false;
 //          AzureResponse response = AzureAdApiClient.getGroupsByUserId(accessToken.getToken());
           String oid = ((AzureAuthenticationToken) auth).getAzureAdUser().getObjectID();
-          Set<String> set = AzureCachePool.getBelongingGroupsByOid(oid);
+          Collection<String> set = AzureCachePool.getBelongingGroupsByOid(oid);
 
           // plus user himself/herself
           set.add(oid);

@@ -25,11 +25,6 @@
 
 package com.michelin.cio.hudson.plugins.rolestrategy;
 
-import com.microsoft.jenkins.azuread.*;
-import com.microsoft.jenkins.azuread.api.AzureCachePool;
-import com.microsoft.jenkins.azuread.api.AzureObject;
-import com.microsoft.jenkins.azuread.api.AzureObjectType;
-import com.microsoft.jenkins.azuread.scribe.AzureToken;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleMacroExtension;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType;
 import com.synopsys.arc.jenkins.plugins.rolestrategy.UserMacroExtension;
@@ -41,18 +36,12 @@ import hudson.model.Descriptor.FormException;
 import hudson.security.AuthorizationStrategy;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import javax.servlet.ServletException;
 
-import hudson.security.SecurityRealm;
 import hudson.util.FormApply;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 
-import org.json.JSONException;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;

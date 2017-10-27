@@ -38,13 +38,6 @@ public class AzureAuthenticationToken extends AbstractAuthenticationToken {
         return this.azureAdUser != null ? this.azureAdUser.getAuthorities() : new GrantedAuthority[0];
     }
 
-
-    public static void refreshAppOnlyToken()
-            throws ExecutionException, IOException, InterruptedException {
-        appOnlyToken = null;
-        getAppOnlyToken();
-    }
-
     public static AzureToken getAppOnlyToken() throws ExecutionException, IOException, InterruptedException {
         if (Constants.DEBUG || appOnlyToken == null || appOnlyToken.isExpired()) {
             // refresh token

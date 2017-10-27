@@ -270,7 +270,7 @@ public class AzureAdApiClient {
                 JSONArray objs = json.getJSONArray("value");
                 Set<AzureObject> set = new HashSet<>();
                 for (int i = 0; i < objs.length(); i++) {
-                    AzureObject obj = (AzureObject) Utils.GsonUtil.generateFromJsonString(objs.getString(i), type.getClazz());
+                    AzureObject obj = (AzureObject) Utils.JsonUtil.fromJson(objs.getString(i), type.getClazz());
                     set.add(obj);
                 }
                 return set;
