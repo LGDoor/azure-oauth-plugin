@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
+ */
+
 package com.microsoft.jenkins.azuread.scribe;
 
 import com.github.scribejava.core.extractors.TokenExtractor;
@@ -6,7 +11,6 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.microsoft.jenkins.azuread.Constants;
 import org.apache.commons.lang.StringUtils;
 import com.github.scribejava.core.builder.api.DefaultApi20;
-
 
 public class AzureApi extends DefaultApi20 {
 

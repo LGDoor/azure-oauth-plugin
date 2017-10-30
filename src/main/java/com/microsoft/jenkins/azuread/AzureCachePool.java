@@ -15,9 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-/**
- * Created by albertxavier on 2017/9/7.
- */
 public class AzureCachePool {
     private static final Logger LOGGER = Logger.getLogger(AzureCachePool.class.getName());
     private static final Cache<String, Collection<String>> belongingGroupsByOid =

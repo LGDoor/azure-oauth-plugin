@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
+ */
+
 package com.microsoft.jenkins.azuread;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -6,12 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.regex.Pattern;
 
-/**
- * Created by t-wanl on 8/23/2017.
- */
 public class Utils {
 
     public static class UUIDUtil {

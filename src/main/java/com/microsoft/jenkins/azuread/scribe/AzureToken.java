@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
+ */
+
 package com.microsoft.jenkins.azuread.scribe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -5,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 
 import java.util.Objects;
-
 
 public class AzureToken extends OAuth2AccessToken {
 

@@ -1,8 +1,9 @@
-package com.microsoft.jenkins.azuread;
-
-/**
- * Created by albertxavier on 2017/8/30.
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
  */
+
+package com.microsoft.jenkins.azuread;
 
 public class Constants {
     public static final String DEFAULT_MANAGEMENT_URL = "https://management.core.windows.net/";

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
+ */
+
 package com.microsoft.jenkins.azuread;
 
 import com.microsoft.jenkins.azuread.scribe.AzureToken;
@@ -7,12 +12,6 @@ import org.acegisecurity.providers.AbstractAuthenticationToken;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.logging.Logger;
-
-
-/**
- * Created by t-wanl on 8/9/2017.
- */
-
 
 public class AzureAuthenticationToken implements Authentication {
 
