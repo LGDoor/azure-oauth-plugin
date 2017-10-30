@@ -10,12 +10,7 @@ import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.oauth.OAuth20Service;
 
 public class AzureOAuthServiceImpl extends OAuth20Service {
-    /**
-     * Default constructor
-     *
-     * @param api    OAuth2.0 api information
-     * @param config OAuth 2.0 configuration param object
-     */
+
     public AzureOAuthServiceImpl(AzureApi api, OAuthConfig config) {
         super(api, config);
     }

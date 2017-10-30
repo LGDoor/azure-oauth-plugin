@@ -15,10 +15,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class AzureCachePool {
+public final class AzureCachePool {
     private static final Logger LOGGER = Logger.getLogger(AzureCachePool.class.getName());
-    private static final Cache<String, Collection<String>> belongingGroupsByOid =
+    private static Cache<String, Collection<String>> belongingGroupsByOid =
             CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.HOURS).build();
+
+    private AzureCachePool() {
+    }
 
     public static Collection<String> getBelongingGroupsByOid(final String oid) throws IOException, ExecutionException {
         try {
@@ -26,13 +29,15 @@ public class AzureCachePool {
                 @Override
                 public Collection<String> call() throws Exception {
                     Stopwatch stopwatch = Stopwatch.createStarted();
-                    AzureSecurityRealm securityRealm = (AzureSecurityRealm) Jenkins.getActiveInstance().getSecurityRealm();
+                    AzureSecurityRealm securityRealm =
+                            (AzureSecurityRealm) Jenkins.getActiveInstance().getSecurityRealm();
                     List<String> groups = Azure.authenticate(securityRealm.getAzureCredential())
                             .activeDirectoryUsers().inner().getMemberGroups(oid, false);
                     Azure.authenticate(securityRealm.getAzureCredential()).activeDirectoryUsers().list().loadAll();
 
                     stopwatch.stop();
-                    System.out.println("getBelongingGroupsByOid time (debug) = " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
+                    System.out.println("getBelongingGroupsByOid time (debug) = "
+                            + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
                     System.out.println("getBelongingGroupsByOid: set = " + groups);
                     return groups;
                 }

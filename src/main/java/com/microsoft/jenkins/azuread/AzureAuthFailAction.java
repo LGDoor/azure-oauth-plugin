@@ -40,10 +40,8 @@ public class AzureAuthFailAction implements UnprotectedRootAction {
         assert j != null;
         SecurityRealm r = j.getSecurityRealm();
         if (r instanceof AzureSecurityRealm) {
-            AzureSecurityRealm ghsr = (AzureSecurityRealm) r;
-            return ghsr.getAzurePortalUrl();
+            return Constants.AZURE_PORTAL_URL;
         }
-        // only called from the Jelly if the GithubSecurityRealm is set...
         return "";
     }
 
@@ -53,10 +51,8 @@ public class AzureAuthFailAction implements UnprotectedRootAction {
         assert j != null;
         SecurityRealm r = j.getSecurityRealm();
         if (r instanceof AzureSecurityRealm) {
-            AzureSecurityRealm ghsr = (AzureSecurityRealm) r;
             return "Azure";
         }
-        // only called from the Jelly if the GithubSecurityRealm is set...
         return "";
     }
 }

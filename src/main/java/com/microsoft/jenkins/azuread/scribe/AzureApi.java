@@ -6,7 +6,8 @@
 package com.microsoft.jenkins.azuread.scribe;
 
 import com.github.scribejava.core.extractors.TokenExtractor;
-import com.github.scribejava.core.model.*;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuthConfig;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.microsoft.jenkins.azuread.Constants;
 import org.apache.commons.lang.StringUtils;

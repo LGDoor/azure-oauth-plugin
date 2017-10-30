@@ -37,7 +37,7 @@ public class AzureAdMatrixAuthorizationStategy extends GlobalMatrixAuthorization
 
     private static final Pattern LONGNAME_PATTERN = Pattern.compile("(.*) \\((.*)\\)");
 
-    private transient final Map<String, String> objId2LongNameMap = new HashMap<>();
+    private final transient Map<String, String> objId2LongNameMap = new HashMap<>();
 
     @Override
     public void add(Permission p, String sid) {
@@ -54,19 +54,21 @@ public class AzureAdMatrixAuthorizationStategy extends GlobalMatrixAuthorization
             String displayName = matcher.group(1);
             String objectId = matcher.group(2);
             return objectId;
-        } else
+        } else {
             return null;
+        }
     }
 
     protected static String generateLongName(final String displayName, final String objectId) {
-        return String.format("%s (%s)",displayName, objectId);
+        return String.format("%s (%s)", displayName, objectId);
     }
 
     protected String getLongName(final String sid) {
         if (objId2LongNameMap.containsKey(sid)) {
             return objId2LongNameMap.get(sid);
-        } else
+        } else {
             return sid;
+        }
     }
 
     @Override
@@ -101,38 +103,47 @@ public class AzureAdMatrixAuthorizationStategy extends GlobalMatrixAuthorization
 
         public AutoCompletionCandidates doAutoCompleteUserOrGroup(@QueryParameter String value)
                 throws ExecutionException, IOException, InterruptedException {
-            if (StringUtils.isEmpty(value))
+            final int maxCandidates = 20;
+            if (StringUtils.isEmpty(value)) {
                 return null;
+            }
             AutoCompletionCandidates c = new AutoCompletionCandidates();
 
             SecurityRealm realm = Jenkins.getActiveInstance().getSecurityRealm();
-            if (!(realm instanceof AzureSecurityRealm)) return null;
+            if (!(realm instanceof AzureSecurityRealm)) {
+                return null;
+            }
             AzureTokenCredentials cred = ((AzureSecurityRealm) realm).getAzureCredential();
 
             List<AzureObject> candidates = new ArrayList<>();
             System.out.println("search users with prefix: " + value);
             Azure.Authenticated authenticated = Azure.authenticate(cred);
             PagedList<UserInner> matchedUsers = authenticated.activeDirectoryUsers()
-                    .inner().list("startswith(displayName,'" + value +"')");
+                    .inner().list("startswith(displayName,'" + value + "')");
             for (UserInner user : matchedUsers.currentPage().items()) {
                 candidates.add(new AzureObject(user.objectId(), user.displayName()));
-                if (candidates.size() > 20) break;
+                if (candidates.size() > maxCandidates) {
+                    break;
+                }
             }
 
             if (!matchedUsers.hasNextPage()) {
                 System.out.println("search groups with prefix " + value);
                 PagedList<ADGroupInner> matchedGroups = authenticated.activeDirectoryGroups()
-                        .inner().list("startswith(displayName,'" + value +"')");
+                        .inner().list("startswith(displayName,'" + value + "')");
                 for (ADGroupInner group : matchedGroups.currentPage().items()) {
                     candidates.add(new AzureObject(group.objectId(), group.displayName()));
-                    if (candidates.size() > 20) break;
+                    if (candidates.size() > maxCandidates) {
+                        break;
+                    }
                 }
             }
 
             for (AzureObject obj : candidates) {
                 String candadateText = generateLongName(obj.getDisplayName(), obj.getObjectId());
-                if (StringUtils.startsWithIgnoreCase(candadateText, value))
+                if (StringUtils.startsWithIgnoreCase(candadateText, value)) {
                     c.add(candadateText);
+                }
             }
 
             return c;

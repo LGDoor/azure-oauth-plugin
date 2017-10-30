@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class AzureToken extends OAuth2AccessToken {
 
@@ -30,6 +31,7 @@ public class AzureToken extends OAuth2AccessToken {
         this.idToken = idToken;
     }
 
+    @SuppressWarnings({"checkstyle:magicnumber"})
     @Override
     public int hashCode() {
         int hash = super.hashCode();
@@ -77,7 +79,7 @@ public class AzureToken extends OAuth2AccessToken {
     }
 
     public boolean isExpired() {
-        return expiryOn < System.currentTimeMillis() / 1000;
+        return expiryOn < TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override

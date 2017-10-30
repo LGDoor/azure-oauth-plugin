@@ -12,7 +12,7 @@ import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.userdetails.UserDetails;
 import org.apache.commons.lang.StringUtils;
 
-public class AzureAdUser implements UserDetails {
+public final class AzureAdUser implements UserDetails {
 
     private String userName;
 
@@ -29,12 +29,13 @@ public class AzureAdUser implements UserDetails {
     private transient volatile GrantedAuthority[] authorities;
 
     private AzureAdUser() {
-        authorities = new GrantedAuthority[] { SecurityRealm.AUTHENTICATED_AUTHORITY };
+        authorities = new GrantedAuthority[]{SecurityRealm.AUTHENTICATED_AUTHORITY};
     }
 
     public static AzureAdUser createFromJwt(String jwt) {
-        if (StringUtils.isEmpty(jwt))
+        if (StringUtils.isEmpty(jwt)) {
             return null;
+        }
 
         DecodedJWT decoded = JWT.decode(jwt);
         AzureAdUser user = new AzureAdUser();
@@ -50,6 +51,7 @@ public class AzureAdUser implements UserDetails {
         return user;
     }
 
+    @SuppressWarnings({"checkstyle:needbraces"})
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -65,6 +67,7 @@ public class AzureAdUser implements UserDetails {
         return objectID.equals(that.objectID);
     }
 
+    @SuppressWarnings({"checkstyle:magicnumber"})
     @Override
     public int hashCode() {
         int result = userName != null ? userName.hashCode() : 0;

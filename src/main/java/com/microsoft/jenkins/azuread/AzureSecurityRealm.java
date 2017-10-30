@@ -32,7 +32,11 @@ import hudson.security.UserMayOrMayNotExistException;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
-import org.acegisecurity.*;
+import org.acegisecurity.Authentication;
+import org.acegisecurity.AuthenticationException;
+import org.acegisecurity.AuthenticationManager;
+import org.acegisecurity.BadCredentialsException;
+import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.acegisecurity.userdetails.UserDetails;
 import org.acegisecurity.userdetails.UserDetailsService;
@@ -59,7 +63,6 @@ public class AzureSecurityRealm extends SecurityRealm {
     private static final String REFERER_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".referer";
     private static final String TIMESTAMP_ATTRIBUTE = AzureSecurityRealm.class.getName() + ".beginTime";
     private static final Logger LOGGER = Logger.getLogger(AzureSecurityRealm.class.getName());
-    private static final String azurePortalUrl = "https://ms.portal.azure.com";
     private Secret clientId;
     private Secret clientSecret;
     private Secret tenant;
@@ -74,10 +77,6 @@ public class AzureSecurityRealm extends SecurityRealm {
 
     public String getTenantSecret() {
         return tenant.getEncryptedValue();
-    }
-
-    public String getAzurePortalUrl() {
-        return azurePortalUrl;
     }
 
     public String getClientId() {
@@ -141,7 +140,8 @@ public class AzureSecurityRealm extends SecurityRealm {
     }
 
 
-    public HttpResponse doCommenceLogin(StaplerRequest request, @Header("Referer") final String referer) throws IOException {
+    public HttpResponse doCommenceLogin(StaplerRequest request, @Header("Referer") final String referer)
+            throws IOException {
         request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
         OAuth20Service service = getOAuthService();
         request.getSession().setAttribute(TIMESTAMP_ATTRIBUTE, System.currentTimeMillis());
@@ -199,7 +199,8 @@ public class AzureSecurityRealm extends SecurityRealm {
 
     @Override
     protected String getPostLogOutUrl(StaplerRequest req, Authentication auth) {
-        // if we just redirect to the root and anonymous does not have Overall read then we will start a login all over again.
+        // if we just redirect to the root and anonymous does not have Overall read
+        // then we will start a login all over again.
         // we are actually anonymous here as the security context has been cleared
 
         // invalidateBelongingGroupsByOid
@@ -229,7 +230,8 @@ public class AzureSecurityRealm extends SecurityRealm {
             }
         }, new UserDetailsService() {
             @Override
-            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DataAccessException {
+            public UserDetails loadUserByUsername(String username)
+                    throws UsernameNotFoundException, DataAccessException {
                 throw new UserMayOrMayNotExistException("Cannot verify users in this context");
             }
         });
@@ -353,7 +355,8 @@ public class AzureSecurityRealm extends SecurityRealm {
 
         public FormValidation doVerifyConfiguration(@QueryParameter final String clientId,
                                                     @QueryParameter final String clientSecret,
-                                                    @QueryParameter final String tenant) throws IOException, ExecutionException {
+                                                    @QueryParameter final String tenant)
+                throws IOException, ExecutionException {
 
 
             AzureTokenCredentials credential = new ApplicationTokenCredentials(clientId,

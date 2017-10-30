@@ -16,11 +16,11 @@ import java.util.regex.Pattern;
 public class Utils {
 
     public static class UUIDUtil {
-        private static final Pattern pattern = Pattern
+        private static final Pattern UUID_PATTERN = Pattern
                 .compile("(?i)^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-5][0-9a-f]{3}-?[089ab][0-9a-f]{3}-?[0-9a-f]{12}$");
 
         public static final boolean isValidUuid(final String uuid) {
-            return ((uuid != null) && (uuid.trim().length() > 31)) ? pattern.matcher(uuid).matches() : false;
+            return ((uuid != null)) && UUID_PATTERN.matcher(uuid).matches();
         }
     }
 

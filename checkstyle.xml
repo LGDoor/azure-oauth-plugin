@@ -137,8 +137,10 @@
         <module name="ArrayTypeStyle"/>
         <module name="UpperEll"/>
         <module name="FileContentsHolder"/>
+        <module name="SuppressWarningsHolder" />
     </module>
 
     <module name="SuppressionCommentFilter"/>
+    <module name="SuppressWarningsFilter" />
 
 </module>
